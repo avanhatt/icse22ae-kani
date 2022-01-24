@@ -166,55 +166,55 @@ RUN (groupadd --gid=${USER_GID} ${USERNAME} || true) \
 # SOLVERS
 USER ${USERNAME}
 
-# # Install minisat solver
+# Install minisat solver
 
-# RUN mkdir ${USER_HOME}/minisat
-# WORKDIR ${USER_HOME}/minisat
+RUN mkdir ${USER_HOME}/minisat
+WORKDIR ${USER_HOME}/minisat
 
-# ARG MINISAT_VERSION
-# RUN git clone --no-checkout https://github.com/stp/minisat.git \
-#   && cd minisat \
-#   && git checkout ${MINISAT_VERSION} \
-#   && git submodule init \
-#   && git submodule update \
-#   && mkdir build \
-#   && cd build \
-#   && cmake .. \
-#   && make -j4 \
-#   && sudo make install \
-#   && make clean
+ARG MINISAT_VERSION=37158a35c62d448b3feccfa83006266e12e5acb7
+RUN git clone --no-checkout https://github.com/stp/minisat.git \
+  && cd minisat \
+  && git checkout ${MINISAT_VERSION} \
+  && git submodule init \
+  && git submodule update \
+  && mkdir build \
+  && cd build \
+  && cmake .. \
+  && make -j4 \
+  && sudo make install \
+  && make clean
 
-# # Install stp solver
+# Install stp solver
 
-# RUN mkdir ${USER_HOME}/stp
-# WORKDIR ${USER_HOME}/stp
+RUN mkdir ${USER_HOME}/stp
+WORKDIR ${USER_HOME}/stp
 
-# ARG STP_VERSION
-# RUN git clone --no-checkout https://github.com/stp/stp.git \
-#   && cd stp \
-#   && git checkout tags/${STP_VERSION} \
-#   && mkdir build \
-#   && cd build \
-#   && cmake .. \
-#   && make -j4 \
-#   && sudo make install \
-#   && make clean
+ARG STP_VERSION=2.3.3
+RUN git clone --no-checkout https://github.com/stp/stp.git \
+  && cd stp \
+  && git checkout tags/${STP_VERSION} \
+  && mkdir build \
+  && cd build \
+  && cmake .. \
+  && make -j4 \
+  && sudo make install \
+  && make clean
 
-# # Install yices solver
+# Install yices solver
 
-# RUN mkdir ${USER_HOME}/yices
-# WORKDIR ${USER_HOME}/yices
+RUN mkdir ${USER_HOME}/yices
+WORKDIR ${USER_HOME}/yices
 
-# ARG YICES_VERSION
-# RUN curl --location https://yices.csl.sri.com/releases/${YICES_VERSION}/yices-${YICES_VERSION}-x86_64-pc-linux-gnu-static-gmp.tar.gz > yices.tgz \
-#   && tar xf yices.tgz \
-#   && rm yices.tgz \
-#   && cd "yices-${YICES_VERSION}" \
-#   && sudo ./install-yices \
-#   && cd .. \
-#   && rm -r "yices-${YICES_VERSION}"
+ARG YICES_VERSION=2.6.2
+RUN curl --location https://yices.csl.sri.com/releases/${YICES_VERSION}/yices-${YICES_VERSION}-x86_64-pc-linux-gnu-static-gmp.tar.gz > yices.tgz \
+  && tar xf yices.tgz \
+  && rm yices.tgz \
+  && cd "yices-${YICES_VERSION}" \
+  && sudo ./install-yices \
+  && cd .. \
+  && rm -r "yices-${YICES_VERSION}"
 
-# ENV YICES_DIR=${USER_HOME}/yices/yices-${YICES_VERSION}
+ENV YICES_DIR=${USER_HOME}/yices/yices-${YICES_VERSION}
 
 # Install the binary version of Z3.
 # (Changing this to build from source would be fine - but slow)
@@ -251,3 +251,112 @@ ENV LLVM_VERSION=${LLVM_VERSION}
 
 ARG KLEE_VERSION=c51ffcd377097ee80ec9b0d6f07f8ea583a5aa1d
 RUN sh build_klee
+
+# SEAHORN
+USER ${USERNAME}
+WORKDIR ${USER_HOME}
+
+ARG SEAHORN_VERIFY_C_COMMON_VERSION=70129bf47c421d8283785a8fb13cdb216424ef91
+ARG SEAHORN_VERSION=ccdc529f81a02e9236ffa00ff57eef4487f0fc9a
+
+# cargo-verify relies on this variable to find the yaml files
+ENV SEAHORN_VERIFY_C_COMMON_DIR=${USER_HOME}/verify-c-common
+
+RUN git clone --no-checkout https://github.com/seahorn/verify-c-common.git ${SEAHORN_VERIFY_C_COMMON_DIR} \
+  && cd ${SEAHORN_VERIFY_C_COMMON_DIR} \
+  && git checkout ${SEAHORN_VERIFY_C_COMMON_VERSION}
+
+ENV SEAHORN_DIR=${USER_HOME}/seahorn
+
+RUN git clone --no-checkout https://github.com/seahorn/seahorn.git ${SEAHORN_DIR} \
+  && cd ${SEAHORN_DIR} \
+  && git checkout ${SEAHORN_VERSION}
+
+# Configure, build and install SeaHorn
+# Afterwards, clean up large files but not configuration files
+# so that RVT developers can easily tweak the configuration and rebuild.
+RUN mkdir ${SEAHORN_DIR}/build \
+  && cd ${SEAHORN_DIR}/build \
+  && cmake \
+     # -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+     -DCMAKE_INSTALL_PREFIX=run \
+     # -DCMAKE_BUILD_TYPE="Debug" \
+     -DCMAKE_BUILD_TYPE="Release" \
+     -DCMAKE_CXX_COMPILER="clang++-${LLVM_VERSION}" \
+     -DCMAKE_C_COMPILER="clang-${LLVM_VERSION}" \
+     -DZ3_ROOT=${Z3_DIR} \
+     -DYICES2_HOME=${YICES_DIR} \
+     -DSEA_ENABLE_LLD="ON" \
+     -GNinja \
+     -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
+     -DLLVM_DIR=/usr/lib/llvm-${LLVM_VERSION}/lib/cmake/llvm \
+     .. \
+  && cmake --build . -j4 --target extra \
+  && cmake --build . -j4 --target crab \
+  && cmake .. \
+  && sudo cmake --build . -j4 --target install \
+  && sudo cmake --build . --target clean
+
+ENV PATH="${SEAHORN_DIR}/build/run/bin:$PATH"
+
+# RVT itself
+# Switch to USERNAME and install tools / set environment
+USER ${USERNAME}
+WORKDIR ${USER_HOME}
+ENV USER=${USERNAME}
+
+ENV PATH="${PATH}:${USER_HOME}/bin"
+ENV PATH="${PATH}:${USER_HOME}/.cargo/bin"
+
+# Install rustup
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+# Install the nightly toolchain - we use it to build some of our tools.
+# We do not set it as the default though because we want to use the
+# version of rustc and lib{core,std} that we built before
+# and, in particular, we have to use a version of rustc that uses LLVM-10.
+RUN rustup toolchain install nightly
+
+# Version of rustc that our tools support
+# This is the default
+ARG RUSTC_VERSION=nightly-2020-08-03
+ENV RUSTC_VERSION=${RUSTC_VERSION}
+RUN echo Installing ${RUSTC_VERSION}
+RUN rustup toolchain install ${RUSTC_VERSION} --profile=minimal
+RUN rustup default ${RUSTC_VERSION}
+
+# Prebuild all the tools and libraries
+# Note that we can't mount RVT_DIR while we do this - so we have to make
+# a copy and build from there. (Which is pretty hacky)
+ENV RVT_DIR=${USER_HOME}/rvt_dir
+RUN mkdir ${RVT_DIR}
+COPY --chown=${USER_UID}:${USER_GID} . ${RVT_DIR}
+WORKDIR ${RVT_DIR}
+RUN ${RVT_DIR}/docker/init
+RUN rm -r ${RVT_DIR}
+
+# Directory we mount RVT repo in
+# Note that this overrides value we just built
+ENV RVT_DIR=/home/rust-verification-tools
+
+ENV PATH="${PATH}:${RVT_DIR}/scripts"
+ENV PATH="${PATH}:${RVT_DIR}/scripts/bin"
+
+# Create a bashrc file
+RUN echo "export PATH=\"${PATH}\":\${PATH}" >> ${USER_HOME}/.bashrc \
+  && echo "ulimit -c0" >> ${USER_HOME}/.bashrc
+
+# DOCKER INIT
+WORKDIR ${USER_HOME}
+
+# Build libraries
+RUN make -C ${RVT_DIR}/runtime TGT=klee
+RUN make -C ${RVT_DIR}/runtime TGT=seahorn
+RUN make -C ${RVT_DIR}/runtime TGT=smack
+RUN make -C ${RVT_DIR}/simd_emulation
+
+# Build tools
+RUN mkdir -p ${USER_HOME}/bin
+RUN cargo +nightly install --root=${USER_HOME} --path=${RVT_DIR}/rust2calltree
+RUN cargo +nightly install --features=llvm${LLVM_VERSION} --root=${USER_HOME} --path=${RVT_DIR}/rvt-patch-llvm
+RUN cargo +nightly install --root=${USER_HOME} --path=${RVT_DIR}/cargo-verify
