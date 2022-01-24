@@ -150,7 +150,7 @@ RUN apt-get --yes update \
 
 # Placeholder args that are expected to be passed in at image build time.
 # See https://code.visualstudio.com/docs/remote/containers-advanced#_creating-a-nonroot-user
-ARG USERNAME=user-name-goes-here
+ARG USERNAME=user
 ARG USER_UID=1000
 ARG USER_GID=${USER_UID}
 ENV USER_HOME=/home/${USERNAME}
@@ -326,18 +326,11 @@ RUN rustup toolchain install ${RUSTC_VERSION} --profile=minimal
 RUN rustup default ${RUSTC_VERSION}
 
 # Prebuild all the tools and libraries
-# Note that we can't mount RVT_DIR while we do this - so we have to make
-# a copy and build from there. (Which is pretty hacky)
-ENV RVT_DIR=${USER_HOME}/rvt_dir
-RUN mkdir ${RVT_DIR}
-COPY --chown=${USER_UID}:${USER_GID} . ${RVT_DIR}
-WORKDIR ${RVT_DIR}
-RUN ${RVT_DIR}/docker/init
-RUN rm -r ${RVT_DIR}
 
 # Directory we mount RVT repo in
 # Note that this overrides value we just built
-ENV RVT_DIR=/home/rust-verification-tools
+WORKDIR ${USER_HOME}
+ENV RVT_DIR=/rust-verification-tools
 
 ENV PATH="${PATH}:${RVT_DIR}/scripts"
 ENV PATH="${PATH}:${RVT_DIR}/scripts/bin"
@@ -346,13 +339,8 @@ ENV PATH="${PATH}:${RVT_DIR}/scripts/bin"
 RUN echo "export PATH=\"${PATH}\":\${PATH}" >> ${USER_HOME}/.bashrc \
   && echo "ulimit -c0" >> ${USER_HOME}/.bashrc
 
-# DOCKER INIT
-WORKDIR ${USER_HOME}
-
-# Build libraries
 RUN make -C ${RVT_DIR}/runtime TGT=klee
 RUN make -C ${RVT_DIR}/runtime TGT=seahorn
-RUN make -C ${RVT_DIR}/runtime TGT=smack
 RUN make -C ${RVT_DIR}/simd_emulation
 
 # Build tools
@@ -360,3 +348,5 @@ RUN mkdir -p ${USER_HOME}/bin
 RUN cargo +nightly install --root=${USER_HOME} --path=${RVT_DIR}/rust2calltree
 RUN cargo +nightly install --features=llvm${LLVM_VERSION} --root=${USER_HOME} --path=${RVT_DIR}/rvt-patch-llvm
 RUN cargo +nightly install --root=${USER_HOME} --path=${RVT_DIR}/cargo-verify
+
+RUN rvt --version
