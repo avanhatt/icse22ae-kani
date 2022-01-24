@@ -72,6 +72,182 @@ RUN mir-json --version
 WORKDIR ../../crux-mmir
 
 # Build crux-mir
-RUN cabal v2-install exe:crux-mir --overwrite-policy=always
+# NOTE: currently failing
+# RUN cabal v2-install exe:crux-mir --overwrite-policy=always
+
+WORKDIR ../../
 
 ##################### Google's Rust Verification Tools ########################
+RUN git clone https://github.com/project-oak/rust-verification-tools.git
+WORKDIR rust-verification-tools
+RUN git checkout b179e90daa9ec77c2a81b903ff832aaca4f87b5b
+
+# BASE
+
+# Install Debian and Python dependencies
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get --yes update \
+  && apt-get install --no-install-recommends --yes \
+  bison \
+  build-essential \
+  clang-10 \
+  clang-format-10 \
+  clang-tools-10 \
+  clang-11 \
+  clang-format-11 \
+  clang-tools-11 \
+  gcc-multilib \
+  g++-7-multilib \
+  cmake \
+  curl \
+  doxygen \
+  expect \
+  flex \
+  git \
+  libboost-all-dev \
+  libcap-dev \
+  libffi-dev \
+  libgoogle-perftools-dev \
+  libncurses5-dev \
+  libsqlite3-dev \
+  libssl-dev \
+  libtcmalloc-minimal4 \
+  lib32stdc++-7-dev \
+  libgmp-dev \
+  libgmpxx4ldbl \
+  lld-10 \
+  lld-11 \
+  llvm-10 \
+  llvm-10-dev \
+  llvm-11 \
+  llvm-11-dev \
+  ncurses-doc \
+  ninja-build \
+  perl \
+  pkg-config \
+  python \
+  python3 \
+  python3-minimal \
+  python3-pip \
+  subversion \
+  sudo \
+  unzip \
+  wget \
+  # Cleanup
+  && apt-get clean \
+  # Install Python packages
+  && pip3 install --no-cache-dir setuptools \
+  && pip3 install --no-cache-dir \
+    argparse \
+    colored \
+    lit \
+    pyyaml \
+    tabulate \
+    termcolor \
+    toml \
+    wllvm
+
+
+# Placeholder args that are expected to be passed in at image build time.
+# See https://code.visualstudio.com/docs/remote/containers-advanced#_creating-a-nonroot-user
+ARG USERNAME=user-name-goes-here
+ARG USER_UID=1000
+ARG USER_GID=${USER_UID}
+ENV USER_HOME=/home/${USERNAME}
+
+# Create the specified user and group and add them to sudoers list
+#
+# Ignore errors if the user or group already exist (it should only happen if the image is being
+# built as root, which happens on GCB).
+RUN (groupadd --gid=${USER_GID} ${USERNAME} || true) \
+  && (useradd --shell=/bin/bash --uid=${USER_UID} --gid=${USER_GID} --create-home ${USERNAME} || true) \
+  && echo "${USERNAME}  ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+# SOLVERS
+USER ${USERNAME}
+
+# # Install minisat solver
+
+# RUN mkdir ${USER_HOME}/minisat
+# WORKDIR ${USER_HOME}/minisat
+
+# ARG MINISAT_VERSION
+# RUN git clone --no-checkout https://github.com/stp/minisat.git \
+#   && cd minisat \
+#   && git checkout ${MINISAT_VERSION} \
+#   && git submodule init \
+#   && git submodule update \
+#   && mkdir build \
+#   && cd build \
+#   && cmake .. \
+#   && make -j4 \
+#   && sudo make install \
+#   && make clean
+
+# # Install stp solver
+
+# RUN mkdir ${USER_HOME}/stp
+# WORKDIR ${USER_HOME}/stp
+
+# ARG STP_VERSION
+# RUN git clone --no-checkout https://github.com/stp/stp.git \
+#   && cd stp \
+#   && git checkout tags/${STP_VERSION} \
+#   && mkdir build \
+#   && cd build \
+#   && cmake .. \
+#   && make -j4 \
+#   && sudo make install \
+#   && make clean
+
+# # Install yices solver
+
+# RUN mkdir ${USER_HOME}/yices
+# WORKDIR ${USER_HOME}/yices
+
+# ARG YICES_VERSION
+# RUN curl --location https://yices.csl.sri.com/releases/${YICES_VERSION}/yices-${YICES_VERSION}-x86_64-pc-linux-gnu-static-gmp.tar.gz > yices.tgz \
+#   && tar xf yices.tgz \
+#   && rm yices.tgz \
+#   && cd "yices-${YICES_VERSION}" \
+#   && sudo ./install-yices \
+#   && cd .. \
+#   && rm -r "yices-${YICES_VERSION}"
+
+# ENV YICES_DIR=${USER_HOME}/yices/yices-${YICES_VERSION}
+
+# Install the binary version of Z3.
+# (Changing this to build from source would be fine - but slow)
+#
+# The Ubuntu version is a little out of date but that doesn't seem to cause any problems
+
+RUN mkdir ${USER_HOME}/z3
+WORKDIR ${USER_HOME}/z3
+ARG Z3_VERSION=4.8.7
+RUN curl --location https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VERSION}/z3-${Z3_VERSION}-x64-ubuntu-16.04.zip > z3.zip \
+  && unzip -q z3.zip \
+  && rm z3.zip
+
+ENV Z3_DIR=${USER_HOME}/z3/z3-${Z3_VERSION}-x64-ubuntu-16.04
+
+# KLEE
+USER root
+WORKDIR ${USER_HOME}
+COPY build_googletest .
+COPY build_klee .
+RUN chown ${USERNAME} -R build_googletest build_klee
+
+USER ${USERNAME}
+WORKDIR ${USER_HOME}
+
+ARG GTEST_VERSION=1.7.0
+ENV GTEST_DIR=${USER_HOME}/googletest-release-${GTEST_VERSION}
+RUN sh build_googletest
+
+ARG UCLIBC_VERSION=klee_uclibc_v1.2
+
+ARG LLVM_VERSION=10
+ENV LLVM_VERSION=${LLVM_VERSION}
+
+ARG KLEE_VERSION=c51ffcd377097ee80ec9b0d6f07f8ea583a5aa1d
+RUN sh build_klee
