@@ -41,7 +41,7 @@ WORKDIR ..
 # Get repo 
 RUN git clone https://github.com/GaloisInc/crucible.git
 WORKDIR crucible/crux-mir
-RUN git checkout 91b989217bdef55b89742a24fb12885e9a9fe3c6
+RUN git checkout 34514237599e2dd6e0ed2b9a895e5dcd52201b7a
 RUN git submodule update --init
 
 # Add Haskell/cabal
@@ -72,8 +72,7 @@ RUN mir-json --version
 WORKDIR ../../crux-mmir
 
 # Build crux-mir
-# NOTE: currently failing
-# RUN cabal v2-install exe:crux-mir --overwrite-policy=always
+RUN cabal v2-install exe:crux-mir --overwrite-policy=always
 
 WORKDIR ../../
 
