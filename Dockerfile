@@ -351,3 +351,32 @@ RUN cargo +nightly install --features=llvm${LLVM_VERSION} --root=${USER_HOME} --
 RUN cargo +nightly install --root=${USER_HOME} --path=${RVT_DIR}/cargo-verify
 
 RUN cargo-verify --version
+
+###########################      SMACK - RUST       ###########################
+WORKDIR /home/usr
+RUN git clone https://github.com/smackers/smack.git
+WORKDIR smack
+RUN git checkout c7d0694f08cefb422ebcc67c23824727b06b370e
+RUN git submodule update --init
+
+ENV SMACKDIR /home/usr/smack
+
+RUN apt-get update && \
+      apt-get -y install \
+      software-properties-common \
+      wget \
+      sudo \
+      g++
+
+USER usr
+ADD --chown=usr . $SMACKDIR
+
+# Set the work directory
+WORKDIR $SMACKDIR
+
+# Build SMACK
+RUN sudo bin/build.sh
+
+# Add envinronment
+RUN echo "source /home/usr/smack.environment" >> /home/usr/.bashrc
+RUN smack --version
