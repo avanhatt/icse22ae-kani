@@ -150,7 +150,7 @@ RUN apt-get --yes update \
 
 # Placeholder args that are expected to be passed in at image build time.
 # See https://code.visualstudio.com/docs/remote/containers-advanced#_creating-a-nonroot-user
-ARG USERNAME=user
+ARG USERNAME=usr
 ARG USER_UID=1000
 ARG USER_GID=${USER_UID}
 ENV USER_HOME=/home/${USERNAME}
@@ -315,6 +315,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 # We do not set it as the default though because we want to use the
 # version of rustc and lib{core,std} that we built before
 # and, in particular, we have to use a version of rustc that uses LLVM-10.
+USER root
 RUN rustup toolchain install nightly
 
 # Version of rustc that our tools support
@@ -325,12 +326,12 @@ RUN echo Installing ${RUSTC_VERSION}
 RUN rustup toolchain install ${RUSTC_VERSION} --profile=minimal
 RUN rustup default ${RUSTC_VERSION}
 
-# Prebuild all the tools and libraries
-
 # Directory we mount RVT repo in
-# Note that this overrides value we just built
-WORKDIR ${USER_HOME}
+USER root
 ENV RVT_DIR=/rust-verification-tools
+RUN chown ${USERNAME} -R ${RVT_DIR}
+RUN chown ${USERNAME} -R ${USER_HOME}
+# USER ${USERNAME}
 
 ENV PATH="${PATH}:${RVT_DIR}/scripts"
 ENV PATH="${PATH}:${RVT_DIR}/scripts/bin"
@@ -349,4 +350,4 @@ RUN cargo +nightly install --root=${USER_HOME} --path=${RVT_DIR}/rust2calltree
 RUN cargo +nightly install --features=llvm${LLVM_VERSION} --root=${USER_HOME} --path=${RVT_DIR}/rvt-patch-llvm
 RUN cargo +nightly install --root=${USER_HOME} --path=${RVT_DIR}/cargo-verify
 
-RUN rvt --version
+RUN cargo-verify --version
