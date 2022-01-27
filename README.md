@@ -63,3 +63,19 @@ To estimate the implicit use of dynamic trait objects, we invoked a debug build 
 # Part 2: Section 4.2: Case study: Firecracker.
 
 # Part 3: 4.3: Dynamic Dispatch Test Suite.
+
+Table 1 includes a summary of how related Rust verifications tools perform on a representative subset of our verification test cases.
+
+To reproduce this table, we have written versions of each test per tool. Each test is modified for the syntax expected by that tool. For example, SMACK requires asserts be written as `smack::assert!(...)`, and Rust Verification Tools requires an entire crate to execute rather than a single Rust file. Each test is within `/icse22ae-kani/<tool name>/*`. 
+
+To compare each tool, we provide a Python `compare_tools.py` script. This script runs each test and checks for tool-specific success or failure strings. You should see results printed for each tool, then a `Results summary table` printed to standard out. All results should be either `SUCCESS` is verification succeeds or `FAILURE` if it does not. An `UNKNOWN` result indicates the tool has failed to run as expected, or did not produce the expected success or failure string(s) in its output.
+
+To reproduce Table 1, run the following inside the Docker:
+```
+cd /icse22ae-kani
+python3 compare_tools.py
+```
+
+To rerun any specific tool(s), you can run, for example, `python3 compare_tools.py --tool kani smack`.
+
+#### Time estimate: 5 minutes.
