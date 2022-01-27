@@ -30,10 +30,9 @@ We estimate the required components of this artifact to take around 1 hour of re
 # Prerequisites
 
 ## Docker
+#### Time estimate: 5 minutes.
 
 We provide our artifact as a [Docker][docker] instance. Users should install Docker based on their system's instructions.
-
-#### Time estimate: 5 minutes.
 
 ## Machine requirements
 
@@ -44,25 +43,18 @@ We also provide a smaller instance that just contains our Kani system and the _r
 ----
 
 # Part 1: Section 4.1: Prevalence of dynamic trait objects.
+#### Time estimate: XX minutes.
 
 This section includes a simple study to get a rough estimate of the prevalence of our feature of interest, dynamic trait objects, within the Rust ecosystem. 
 
-This component of the artifact consists of a python script that (1) downloads the top 500 crates sorted by greatest number of downloads, (2) counts the number of explicit trait objects 
+This component of the artifact consists of a python script that (1) downloads the top 500 crates sorted by greatest number of downloads, (2) estimates the number of explicit trait objects by search for the `dyn` keywords, and (3) estimates the number of implicit dynamic trait objects by searching a debug output of compiling with Rust for the line `get_vtable`, which is logged at vtable use.
 
- on October 2, 2021. 
-
-To estimate the use of explicit dynamic trait objects, 
-To estimate the implicit use of dynamic trait objects, we invoked a debug build of the Rust compiler via
-735 cargo build and searched the debug output for the line get_vtable,
-736 which is logged at vtable use. This is likely an over-estimate of the
-737 dynamic trait objects that are actually used in functionality a user
-738 might want to verify for these crates, but it does provide an indica-
-739 tion of how often verification tools that integrate with Cargo will
-740 encounter linked dynamically dispatched code.
 
 # Part 2: Section 4.2: Case study: Firecracker.
+#### Time estimate: 30 minutes.
 
 # Part 3: 4.3: Dynamic Dispatch Test Suite.
+#### Time estimate: 5 minutes.
 
 Table 1 includes a summary of how related Rust verifications tools perform on a representative subset of our verification test cases.
 
@@ -77,5 +69,3 @@ python3 compare_tools.py
 ```
 
 To rerun any specific tool(s), you can run, for example, `python3 compare_tools.py --tool kani smack`.
-
-#### Time estimate: 5 minutes.
