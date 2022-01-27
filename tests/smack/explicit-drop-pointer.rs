@@ -37,12 +37,12 @@ pub fn main() {
         let _x1: &dyn T = &Concrete1 {};
     }
     unsafe {
-        assert!(CELL == 1);
+        smack::assert!(CELL == 1);
     }
     {
         let _x2: &dyn T = &Concrete2 {};
     }
     unsafe {
-        assert!(CELL == 2);
+        smack::assert!(CELL == 2);
     }
 }

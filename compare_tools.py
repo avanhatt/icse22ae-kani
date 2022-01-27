@@ -11,6 +11,17 @@ Tools covered:
 """
 import os
 import subprocess
+import argparse
+import tabulate
+
+TOOLS = [
+    "kani", 
+    "crux-mir",
+    "rvt-klee",
+    "rvt-sh",
+    "smack",
+]
+
 
 TESTS = [
     "simple-trait-pointer",
@@ -28,6 +39,7 @@ TEST_DIR = "tests"
 KANI_DIR = "kani"
 CRUX_MIR_DIR = "crux-mir"
 RVT_DIR = "rvt"
+SMACK_DIR = "smack"
 
 FAILURE = "FAILURE"
 SUCCESS = "SUCCESS"
@@ -60,10 +72,11 @@ def check_verification_result(cmd, success_str, failure_strs):
         return UNKNOWN
 
 
-def check_kani():
+def check_kani(results):
     """Check results for Kani run on the single Rust test files.
     """
     print("\n---------------------- Checking results for Kani ----------------------")
+    res = ["Kani"]
     for test_name in TESTS:
         test = os.path.join(TEST_DIR, KANI_DIR, test_name + ".rs")
         cmd = ["kani", test]
@@ -71,42 +84,91 @@ def check_kani():
             first = f.readline().rstrip()
             if "// kani-args:" in first:
                 cmd += first.replace("// kani-args:", "").split(" ") 
-        res = check_verification_result(cmd, "VERIFICATION SUCCESSFUL", ["VERIFICATION FAILED"])
+        res.append(check_verification_result(cmd, "VERIFICATION SUCCESSFUL", ["VERIFICATION FAILED"]))
+    results.append(res)
 
-def check_crux_mir():
+def check_crux_mir(results):
     """Check results for Crux-MIR run on the single Rust test files.
     """
     print("\n------------------- Checking results for Crux-MIR ---------------------")
+    res = ["Crux-MIR"]
     for test_name in TESTS:
         test = os.path.join(TEST_DIR, CRUX_MIR_DIR, test_name + ".rs")
-        res = check_verification_result(["/root/.cabal/bin/crux-mir", test], "Overall status: Valid.", ["Overall status: Invalid."])
+        res.append(check_verification_result(["/root/.cabal/bin/crux-mir", test], "Overall status: Valid.", ["Overall status: Invalid."]))
+    results.append(res)
 
-def check_rvt_klee():
+def check_rvt_klee(results):
     """Check results for Rust Verification Tools - KLEE, which needs to be run 
     on crates where each case is a propverify test.
     """
     print("\n------------------ Checking results for RVT - KLEE --------------------")
+    res = ["RVT-KLEE"]
     for test_name in TESTS:
         test = os.path.join(TEST_DIR, RVT_DIR, test_name, "Cargo.toml")
-        res = check_verification_result(["cargo-verify", "--backend=klee", "--tests", "--manifest-path", test], "VERIFICATION_RESULT: VERIFIED", ["VERIFICATION_RESULT: ERROR", "VERIFICATION_RESULT: UNKNOWN"])
+        res.append(check_verification_result(["cargo-verify", "--backend=klee", "--tests", "--manifest-path", test], "VERIFICATION_RESULT: VERIFIED", ["VERIFICATION_RESULT: ERROR", "VERIFICATION_RESULT: UNKNOWN"]))
         result = subprocess.run(["cargo", "clean", "--manifest-path", test], capture_output=True)
+    results.append(res)
 
 
-def check_rvt_seahorn():
+def check_rvt_seahorn(results):
     """Check results for Rust Verification Tools - Seahorn, which needs to be run 
     on crates where each case is a propverify test.
     """
     print("\n---------------- Checking results for RVT - Seahorn -------------------")
+    res = ["RVT-SH"]
     for test_name in TESTS:
         test = os.path.join(TEST_DIR, RVT_DIR, test_name, "Cargo.toml")
-        res = check_verification_result(["cargo-verify", "--backend=seahorn", "--tests", "--manifest-path", test], "VERIFICATION_RESULT: VERIFIED", ["VERIFICATION_RESULT: ERROR", "VERIFICATION_RESULT: UNKNOWN"])
+        res.append(check_verification_result(["cargo-verify", "--backend=seahorn", "--tests", "--manifest-path", test], "VERIFICATION_RESULT: VERIFIED", ["VERIFICATION_RESULT: ERROR", "VERIFICATION_RESULT: UNKNOWN"]))
         result = subprocess.run(["cargo", "clean", "--manifest-path", test], capture_output=True)
+        results.append(res)
+
+def check_smack(results):
+    """Check results for SMACK run on the single Rust test files.
+    """
+    print("\n---------------- Checking results for SMACK - RUST --------------------")
+    res = ["SMACK"]
+    for test_name in TESTS:
+        test = os.path.join(TEST_DIR, SMACK_DIR, test_name + ".rs")
+        res.append(check_verification_result(["smack", "--unroll", "3",  test], "SMACK found no errors with unroll bound 3", ["doesn't have a size known at compile-time"]))
+    results.append(res)
 
 def main():
-    check_kani()
-    check_crux_mir()
-    check_rvt_klee()
-    check_rvt_seahorn()
+    """Parse arguments, run each tool, collect and format results.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--tools", action="extend", nargs="+", type=str, 
+        help='specify which tools to run ({})'.format(", ".join(TOOLS)))
+    args = parser.parse_args()
+
+    if args.tools:
+        for t in args.tools:
+            if t not in TOOLS:
+                print("Tools {} not found in options: {}".format(t, ", ".join(TOOLS)))
+
+
+    results = [["Tool"] + [i+1 for i in range(len(TESTS))]]
+    
+    if args.tools == None or "kani" in args.tools:
+        check_kani(results)
+    
+    if args.tools == None or "crux-mir" in args.tools:
+        check_crux_mir(results)
+
+    if args.tools == None or "rvt-klee" in args.tools:
+        check_rvt_klee(results)
+
+    if args.tools == None or "rvt-sh" in args.tools:
+        check_rvt_seahorn(results)
+
+    if args.tools == None or "smack" in args.tools:
+        check_smack(results)
+
+    print("\n---------------------- Results summary table --------------------------")
+    print("Tests:")
+    for i, test in enumerate(TESTS):
+        print("{} : {}".format(i, test))
+    print()
+    print(tabulate.tabulate(results,headers="firstrow"))
 
 if __name__ == main():
     main()
