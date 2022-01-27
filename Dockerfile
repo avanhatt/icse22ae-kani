@@ -19,7 +19,7 @@ RUN git pull -f
 RUN ./scripts/setup/ubuntu-20.04/install_deps.sh
 RUN ./scripts/setup/ubuntu-20.04/install_cbmc.sh
 RUN ./scripts/setup/install_viewer.sh 2.6
-RUN sudo ./scripts/setup/install_rustup.sh
+RUN ./scripts/setup/install_rustup.sh
 
 RUN git submodule update --init --depth 1
 

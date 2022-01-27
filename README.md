@@ -20,7 +20,7 @@ We compare two versions of Kani, one with our new function pointer restriction a
 3. **4.3: Dynamic Dispatch Test Suite.** We compare the cases handled by Kani and other related Rust verification tools. For 8 selected cases, we compare Kani with Crux-MIR, Rust Verification Tools - Seahorn, Rust Verification Tools - KLEE, SMACK - Rust, Prusti, and CRUST. We also present our suite of 40 total verification test cases for other researchers to use. For this artifact, reviewers should be able to reproduce the results of Table 1.
 
 There are two components to this artifact:
-1. **Kani Rust Verifier (Kani)** This is our publicly available verifier for Rust. Kani (formerly known as the Rust Model Checker (RMC)) contains code from the Rust compiler and is distributed under the terms of both the MIT license and the Apache License (Version 2.0).
+1. **Kani Rust Verifier (Kani)** This is our publicly available verifier for Rust. Kani (formerly known as the Rust Model Checker (kani)) contains code from the Rust compiler and is distributed under the terms of both the MIT license and the Apache License (Version 2.0).
 2. **Verification test cases and comparison to related work** Our contributions include an open-source 
   
 We estimate the required components of this artifact to take around 1 hour of reviewer time.
