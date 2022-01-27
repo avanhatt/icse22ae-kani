@@ -148,7 +148,8 @@ RUN apt-get --yes update \
     tabulate \
     termcolor \
     toml \
-    wllvm
+    wllvm \
+    numpy
 
 
 # Placeholder args that are expected to be passed in at image build time.
@@ -376,6 +377,9 @@ ADD --chown=usr . $SMACKDIR
 
 # Set the work directory
 WORKDIR $SMACKDIR
+
+# Add appropriate Rust toolchain
+RUN rustup install nightly-2021-03-01-x86_64-unknown-linux-gnu
 
 # Build SMACK
 RUN sudo bin/build.sh

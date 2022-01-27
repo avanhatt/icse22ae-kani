@@ -13,6 +13,7 @@ import os
 import subprocess
 import argparse
 import tabulate
+import numpy
 
 TOOLS = [
     "kani", 
@@ -120,7 +121,7 @@ def check_rvt_seahorn(results):
         test = os.path.join(TEST_DIR, RVT_DIR, test_name, "Cargo.toml")
         res.append(check_verification_result(["cargo-verify", "--backend=seahorn", "--tests", "--manifest-path", test], "VERIFICATION_RESULT: VERIFIED", ["VERIFICATION_RESULT: ERROR", "VERIFICATION_RESULT: UNKNOWN"]))
         result = subprocess.run(["cargo", "clean", "--manifest-path", test], capture_output=True)
-        results.append(res)
+    results.append(res)
 
 def check_smack(results):
     """Check results for SMACK run on the single Rust test files.
@@ -146,7 +147,7 @@ def main():
                 print("Tools {} not found in options: {}".format(t, ", ".join(TOOLS)))
 
 
-    results = [["Tool"] + [i+1 for i in range(len(TESTS))]]
+    results = [["Tests"] + [i+1 for i in range(len(TESTS))]]
     
     if args.tools == None or "kani" in args.tools:
         check_kani(results)
@@ -154,14 +155,16 @@ def main():
     if args.tools == None or "crux-mir" in args.tools:
         check_crux_mir(results)
 
-    if args.tools == None or "rvt-klee" in args.tools:
-        check_rvt_klee(results)
-
     if args.tools == None or "rvt-sh" in args.tools:
         check_rvt_seahorn(results)
 
+    if args.tools == None or "rvt-klee" in args.tools:
+        check_rvt_klee(results)
+
     if args.tools == None or "smack" in args.tools:
         check_smack(results)
+
+    results = numpy.transpose(results)
 
     print("\n---------------------- Results summary table --------------------------")
     print("Tests:")
