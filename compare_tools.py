@@ -33,49 +33,62 @@ FAILURE = "FAILURE"
 SUCCESS = "SUCCESS"
 UNKNOWN = "UNKNOWN"
 
-def check_verification_result(cmd, success_str, failure_str):
+def check_verification_result(cmd, success_str, failure_strs):
+    print("RUNNING command:", " ".join(cmd))
     result = subprocess.run(cmd, capture_output=True)
     output = str(result.stdout)
-    print(output)
     success_found = success_str in output
-    failure_found = failure_str in output
+    failure_found = any([f in output for f in failure_strs])
 
     if success_found and not failure_found:
-        print("Command {} succeeded", cmd)
+        print("\tCommand succeeded, found:", success_str)
         return SUCCESS
     elif not success_found and failure_found:
-        print("Command {} failed", cmd)
+        print("\tCommand failed, found:", "/".join(failure_str))
         return FAILURE
     elif success_found and failure_found:
-        print("Expected either success or failure for command {}, found both", cmd)
+        print("\tExpected either success or failure, found both: {} {}", success_str, "/".join(failure_strs))
+        print(output)
         return UNKNOWN
     else:
-        print("Expected either success or failure for command {}, found neither", cmd)
+        print("\tExpected either success or failure, found neither: {} {}",  success_str, "/".join(failure_strs))
+        print(output)
         return UNKNOWN
 
 
 def check_kani():
     for test_name in TESTS:
         test = os.path.join(TEST_DIR, KANI_DIR, test_name + ".rs")
-        res = check_verification_result(["kani", test], "SUCCEEDED", "FAILED")
-        print(res)
+        cmd = ["kani", test]
+        with open(test) as f:
+            first = f.readline().rstrip()
+            if "// kani-args:" in first:
+                cmd += first.replace("// kani-args:", "").split(" ") 
+        res = check_verification_result(cmd, "VERIFICATION SUCCESSFUL", ["VERIFICATION FAILED"])
 
 def check_crux_mir():
     for test_name in TESTS:
         test = os.path.join(TEST_DIR, CRUX_MIR_DIR, test_name + ".rs")
-        res = check_verification_result(["cabal", "v2-exec", "--", "crux-mir", test], "Overall status: Valid.", "Overall status: Invalid.")
-        print(res)
+        res = check_verification_result(["/root/.cabal/bin/crux-mir", test], "Overall status: Valid.", ["Overall status: Invalid."])
 
 def check_rvt_klee():
-    pass
+    for test_name in TESTS:
+        test = os.path.join(TEST_DIR, RVT_DIR, test_name, "Cargo.toml")
+        res = check_verification_result(["cargo-verify", "--backend=klee", "--tests", "--manifest-path", test], "VERIFICATION_RESULT: VERIFIED", ["VERIFICATION_RESULT: ERROR", "VERIFICATION_RESULT: UNKNOWN"])
+        result = subprocess.run(["cargo", "clean", "--manifest-path", test], capture_output=True)
 
-def check_rvt_smack():
-    pass
 
+def check_rvt_seahorn():
+    for test_name in TESTS:
+        test = os.path.join(TEST_DIR, RVT_DIR, test_name, "Cargo.toml")
+        res = check_verification_result(["cargo-verify", "--backend=seahorn", "--tests", "--manifest-path", test], "VERIFICATION_RESULT: VERIFIED", "VERIFICATION_RESULT: ERROR")
+        result = subprocess.run(["cargo", "clean", "--manifest-path", test], capture_output=True)
 
 def main():
     check_kani()
     check_crux_mir()
+    check_rvt_klee()
+    check_rvt_seahorn()
 
 if __name__ == main():
     main()

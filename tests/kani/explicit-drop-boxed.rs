@@ -1,4 +1,4 @@
-// rmc rmc/explicit-drop-boxed.rs --cbmc-args --unwind 2
+// kani-args:--cbmc-args --unwind 2
 static mut CELL: i32 = 0;
 
 struct Concrete;

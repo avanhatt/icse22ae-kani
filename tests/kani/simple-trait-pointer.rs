@@ -1,4 +1,3 @@
-// rmc rmc/simple-trait-pointer.rs
 trait Foo {
     fn f(&self)->bool;
 }

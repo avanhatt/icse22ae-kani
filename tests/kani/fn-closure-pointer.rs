@@ -1,4 +1,3 @@
-// rmc rmc/fn-closure-pointer.rs
 fn takes_dyn_fun(fun: &dyn Fn() -> i32) {
     let x = fun();
     assert!(x == 5);

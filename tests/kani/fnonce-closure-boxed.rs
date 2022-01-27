@@ -1,4 +1,3 @@
-// rmc rmc/fnonce-closure-boxed.rs
 fn takes_dyn_fun(fun: Box<dyn FnOnce() -> i32>) {
     let x = fun();
     assert!(x == 5);

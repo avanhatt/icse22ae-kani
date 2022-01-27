@@ -1,43 +1,47 @@
-# Use a recent Rust as the parent image.
+# Use a recent Ubuntu as the parent image.
 FROM ubuntu:20.04
 
 ########################### Kani Rust Model Checker ###########################
 
+USER root
 # Install some system level dependencies
 RUN apt-get update -y && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y sudo git lsb-release universal-ctags
 
 # Clone Kani itself 
-# TODO: clone specifc branch/tag
 RUN git clone -b ae https://github.com/avanhatt/rmc.git
-WORKDIR rmc
-RUN git submodule update --init
+WORKDIR /rmc
+RUN git config --global user.email "placeholder"
+RUN git config --global user.name "placeholder"
+RUN git pull -f
 
 # Install Kani's dependencies, including Python and CBMC dependencies
 RUN ./scripts/setup/ubuntu-20.04/install_deps.sh
 RUN ./scripts/setup/ubuntu-20.04/install_cbmc.sh
 RUN ./scripts/setup/install_viewer.sh 2.6
-RUN ./scripts/setup/install_rustup.sh
+RUN sudo ./scripts/setup/install_rustup.sh
+
+RUN git submodule update --init --depth 1
 
 # Add .cargo/bin to PATH
+ENV RUST_BACKTRACE=1
 ENV PATH="/root/.cargo/bin:${PATH}"
+RUN rustup default nightly-2022-01-19
 
-RUN ./configure \
-    --enable-debug \
-    --set=llvm.download-ci-llvm=true \
-    --set=rust.debug-assertions-std=false \
-    --set=rust.deny-warnings=false
-
-WORKDIR src/kani-compiler
-RUN cargo build
-WORKDIR ../..
+RUN cargo --version
+RUN cargo clean
+RUN cargo build -p kani-compiler
 
 # Build tool for linking Kani pointer restrictions
-RUN cargo build --release --manifest-path src/tools/kani-link-restrictions/Cargo.toml
-WORKDIR ..
+RUN cargo build --release -p kani-link-restrictions
+
+# Add Kani scripts to path
+ENV PATH=/rmc/scripts:$PATH
 
 ###########################    Crucible's Crux-mir   ###########################
 
+USER root
+WORKDIR /
 # Get repo 
 RUN git clone https://github.com/GaloisInc/crucible.git
 WORKDIR crucible/crux-mir
@@ -379,3 +383,14 @@ RUN sudo bin/build.sh
 # Add envinronment
 RUN echo "source /home/usr/smack.environment" >> /home/usr/.bashrc
 RUN smack --version
+
+###########################     Copy test files     ###########################
+USER root
+RUN mkdir /icse22ae-kani
+WORKDIR /icse22ae-kani
+
+RUN touch foo.rs
+RUN kani --help
+RUN cabal v2-exec -- crux-mir foo.rs
+RUN cargo-verify --help
+RUN smack --help

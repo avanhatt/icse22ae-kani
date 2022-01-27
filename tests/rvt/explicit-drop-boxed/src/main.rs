@@ -26,19 +26,19 @@ proptest! {
         unsafe {
             assert!(CELL == 1);
         }
-
+    
         // Reset global
         unsafe {
             CELL = 0;
         }
-
+    
         // Check nested box, still only incremented once
         {
             let x: Box<dyn Send> = Box::new(Concrete {});
             let _nested: Box<dyn Send> = Box::new(x);
         }
         unsafe {
-            assert!(CELL == 0);
+            assert!(CELL == 1);
         }
     }
 }

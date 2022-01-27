@@ -1,4 +1,3 @@
-// rmc rmc/generic-trait-pointer.rs
 trait Foo<T> {
     fn method(&self, t: T) -> T;
 }

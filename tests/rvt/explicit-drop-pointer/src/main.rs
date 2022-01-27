@@ -3,29 +3,50 @@ use proptest::prelude::*;
 #[cfg(verify)]
 use propverify::prelude::*;
 
-use std::any::Any;
+static mut CELL: i32 = 0;
 
+trait T {
+    fn t(&self) {}
+}
 
-pub fn downcast_to_concrete(a: &dyn Any) {
-    match a.downcast_ref::<i32>() {
-        Some(i) => {
-            assert!(*i == 7);
-        }
-        None => {
-            assert!(false);
+struct Concrete1;
+
+impl T for Concrete1 {}
+
+impl Drop for Concrete1 {
+    fn drop(&mut self) {
+        unsafe {
+            CELL = 1;
         }
     }
 }
 
-pub fn downcast_to_fewer_traits(s: &(dyn Any + Send)) {
-    let c = s as &dyn Any;
-    downcast_to_concrete(c);
+struct Concrete2;
+
+impl T for Concrete2 {}
+
+impl Drop for Concrete2 {
+    fn drop(&mut self) {
+        unsafe {
+            CELL = 2;
+        }
+    }
 }
 
 proptest! {
     #[test]
-    fn multiply(a in 1..=2, b in 1..=2) {
-        let i: i32 = 7;
-        downcast_to_fewer_traits(&i);
+    fn test_trait(a in 1..2) {
+        {
+            let _x1: &dyn T = &Concrete1 {};
+        }
+        unsafe {
+            assert!(CELL == 1);
+        }
+        {
+            let _x2: &dyn T = &Concrete2 {};
+        }
+        unsafe {
+            assert!(CELL == 2);
+        }
     }
 }

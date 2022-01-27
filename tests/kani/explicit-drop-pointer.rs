@@ -1,4 +1,3 @@
-// rmc rmc/explicit-drop-pointer.rs
 static mut CELL: i32 = 0;
 
 trait T {

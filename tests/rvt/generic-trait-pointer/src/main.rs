@@ -3,29 +3,27 @@ use proptest::prelude::*;
 #[cfg(verify)]
 use propverify::prelude::*;
 
-use std::any::Any;
+trait Foo<T> {
+    fn method(&self, t: T) -> T;
+}
 
+trait Bar: Foo<u32> + Foo<i32> {}
 
-pub fn downcast_to_concrete(a: &dyn Any) {
-    match a.downcast_ref::<i32>() {
-        Some(i) => {
-            assert!(*i == 7);
-        }
-        None => {
-            assert!(false);
-        }
+impl<T> Foo<T> for () {
+    fn method(&self, t: T) -> T {
+        t
     }
 }
 
-pub fn downcast_to_fewer_traits(s: &(dyn Any + Send)) {
-    let c = s as &dyn Any;
-    downcast_to_concrete(c);
-}
+impl Bar for () {}
 
 proptest! {
     #[test]
-    fn multiply(a in 1..=2, b in 1..=2) {
-        let i: i32 = 7;
-        downcast_to_fewer_traits(&i);
+    fn test_trait(a in 1..2) {
+        let b: &dyn Bar = &();
+        // The vtable for b will now have two Foo::method entries,
+        // one for Foo<u32> and one for Foo<i32>.
+        let result = <dyn Bar as Foo<u32>>::method(b, 22_u32);
+        assert!(result == 22_u32);
     }
 }
