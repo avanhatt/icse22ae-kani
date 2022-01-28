@@ -16,7 +16,6 @@ REPORT_IMPLICIT_CMD = r"RUSTC=/rust/build/x86_64-unknown-linux-gnu/" \
     "stage1/bin/rustc RUSTC_LOG=rustc_codegen_ssa cargo build 2>&1 | " \
     "grep get_vtable | wc -l"
 
-CRATE_COUNT = 500
 DUMP_URL = 'https://static.crates.io/db-dump.tar.gz'
 CODE_DIR = 'crates'
 
@@ -119,7 +118,7 @@ def download_crate(crate, version):
     return src_dir
 
 
-def crate_scrape(REPORT_CMD):
+def crate_scrape(REPORT_CMD, CRATE_COUNT):
     # Apparently we got some large fields.
     csv.field_size_limit(sys.maxsize)
 
@@ -184,14 +183,20 @@ def crate_scrape(REPORT_CMD):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('N', metavar='N', type=int, help='Number of crates to analyze')
     parser.add_argument("--implicit", action='store_true')
     parser.add_argument("--explicit", action='store_true')
     args = parser.parse_args()
 
+    count = int(args.N)
+    if count < 1 or count > 1000:
+        print("Unexpected N", args.N,  file=sys.stderr)
+        exit(1)
+
     if args.explicit:
         print("Checking for EXPLICIT dynamic trait usage", file=sys.stderr)
-        crate_scrape(REPORT_EXPLICIT_CMD)
+        crate_scrape(REPORT_EXPLICIT_CMD, count)
 
     if args.implicit:
         print("Checking for IMPLICIT dynamic trait usage", file=sys.stderr)
-        crate_scrape(REPORT_IMPLICIT_CMD)
+        crate_scrape(REPORT_IMPLICIT_CMD, count)

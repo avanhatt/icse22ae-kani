@@ -63,19 +63,55 @@ docker run -i -t --rm ghcr.io/avanhatt/icse22ae-kani:0.0
 ```
 
 # Part 1: Section 4.1: Prevalence of dynamic trait objects.
-#### Time estimate: 5 minutes.
+#### Time estimate: 10 minutes.
 
 This section includes a simple study to get a rough estimate of the prevalence of our feature of interest, dynamic trait objects, within the Rust ecosystem. 
 
 This component of the artifact consists of a python script that (1) downloads the top 500 crates sorted by greatest number of downloads, (2) estimates the number of explicit trait objects by search for the `dyn` keywords, and (3) estimates the number of implicit dynamic trait objects by searching a debug output of compiling with Rust for the line `get_vtable`, which is logged at vtable use.
 
-Run the script with:
+Running the script for all 500 crates takes over an hour, since it involves a debug built of each crate. Instead, we can look at just the top 50 crates, which should take under 10 minutes (the most popular crates also tend to be smaller).
+
+Run the script for the top 50 crates with:
 ```bash
 cd /icse22ae-kani/crate-data
 time make
 ```
 
-You should see some per-crate output, then the following summary, where `nonzero-pct` indicates the percentage of crates where each type of dynamic trait object is found, as described in the paper.
+You should see some per-crate output, then the following summary, where `nonzero-pct` indicates the percentage of crates where each type of dynamic trait object is found, which should _roughly_ correspond with the percentages over a large number of crates in the paper (37% and 70%) in the paper.
+
+```
+Summary for trait counts
+python3 summarize.py < explicit.json
+{
+  "mean": 3.6,
+  "median": 0.0,
+  "nonzero": 18,
+  "nonzero-pct": "36",
+  "total": 50
+}
+python3 summarize.py < implicit.json
+{
+  "mean": 32.42,
+  "median": 7.0,
+  "nonzero": 39,
+  "nonzero-pct": "78",
+  "total": 50
+}
+``
+
+Note: by default this will use the already-downloaded crate data at `/icse22ae-kani/crate-data/db-dump.tar.gz`. To optionally re-download the data, run `rm /icse22ae-kani/crate-data/db-dump.tar.gz` before the previous command (this will take >30 minutes, depending on the host machine).
+
+### Optional: run for all 500 crates
+
+Running all 500 crates will take over an hour:
+```bash
+# Optional!
+cd /icse22ae-kani/crate-data
+time make 500-report
+```
+
+Where you can expect this full result:
+
 ```
 Summary for trait counts
 python3 summarize.py < explicit.json
@@ -95,9 +131,6 @@ python3 summarize.py < implicit.json
   "total": 500
 }
 ```
-
-Note: by default this will use the already-downloaded crate data at `/icse22ae-kani/crate-data/db-dump.tar.gz`. To optionally re-download the data, run `rm /icse22ae-kani/crate-data/db-dump.tar.gz` before the previous command (this will take >20 minutes, depending on the host machine).
-
 
 # Part 2: Section 4.2: Case study: Firecracker.
 #### Time estimate: 30 minutes.

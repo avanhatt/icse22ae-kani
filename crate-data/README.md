@@ -16,7 +16,7 @@ The tool will download a `db-dump.tar.gz` file once and reuse it when run again.
 
 The tool prints a CSV to standard output consisting of some basic data about the crates and the results of running the report command on each.
 
-To control the number of (top) crates to analyze, set the `CRATE_COUNT` constant in the source code. The tool runs a shell command to extract data from each crate; set the `REPORT_CMD` constant to the command you want to run. The command is a [Python template string][template], so insert `{}` where you want the code directory name to appear. 
+To control the number of (top) crates to analyze, pass a positional argument `N`. The tool runs a shell command to extract data from each crate; set the `REPORT_CMD` constant to the command you want to run. The command is a [Python template string][template], so insert `{}` where you want the code directory name to appear. 
 
 By default, this counts (1) explicit use of dynamic trait objects with by searching for the `dyn` keyword, and (2) implicit use of dynamic trait objects by searching for calls to `get_vtable`.
 
