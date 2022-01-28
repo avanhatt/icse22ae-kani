@@ -23,7 +23,6 @@ TOOLS = [
     "smack",
 ]
 
-
 TESTS = [
     "simple-trait-pointer",
     "simple-trait-boxed",
@@ -34,8 +33,6 @@ TESTS = [
     "explicit-drop-boxed",
     "explicit-drop-pointer",
 ]
-
-TEST_DIR = "tests"
 
 KANI_DIR = "kani"
 CRUX_MIR_DIR = "crux-mir"
@@ -79,7 +76,7 @@ def check_kani(results):
     print("\n---------------------- Checking results for Kani ----------------------")
     res = ["Kani"]
     for test_name in TESTS:
-        test = os.path.join(TEST_DIR, KANI_DIR, test_name + ".rs")
+        test = os.path.join(KANI_DIR, test_name + ".rs")
         cmd = ["kani", test]
         with open(test) as f:
             first = f.readline().rstrip()
@@ -94,7 +91,7 @@ def check_crux_mir(results):
     print("\n------------------- Checking results for Crux-MIR ---------------------")
     res = ["Crux-MIR"]
     for test_name in TESTS:
-        test = os.path.join(TEST_DIR, CRUX_MIR_DIR, test_name + ".rs")
+        test = os.path.join(CRUX_MIR_DIR, test_name + ".rs")
         res.append(check_verification_result(["/root/.cabal/bin/crux-mir", test], "Overall status: Valid.", ["Overall status: Invalid."]))
     results.append(res)
 
@@ -105,7 +102,7 @@ def check_rvt_klee(results):
     print("\n------------------ Checking results for RVT - KLEE --------------------")
     res = ["RVT-KLEE"]
     for test_name in TESTS:
-        test = os.path.join(TEST_DIR, RVT_DIR, test_name, "Cargo.toml")
+        test = os.path.join(RVT_DIR, test_name, "Cargo.toml")
         res.append(check_verification_result(["cargo-verify", "--backend=klee", "--tests", "--manifest-path", test], "VERIFICATION_RESULT: VERIFIED", ["VERIFICATION_RESULT: ERROR", "VERIFICATION_RESULT: UNKNOWN"]))
         result = subprocess.run(["cargo", "clean", "--manifest-path", test], capture_output=True)
     results.append(res)
@@ -118,7 +115,7 @@ def check_rvt_seahorn(results):
     print("\n---------------- Checking results for RVT - Seahorn -------------------")
     res = ["RVT-SH"]
     for test_name in TESTS:
-        test = os.path.join(TEST_DIR, RVT_DIR, test_name, "Cargo.toml")
+        test = os.path.join(RVT_DIR, test_name, "Cargo.toml")
         res.append(check_verification_result(["cargo-verify", "--backend=seahorn", "--tests", "--manifest-path", test], "VERIFICATION_RESULT: VERIFIED", ["VERIFICATION_RESULT: ERROR", "VERIFICATION_RESULT: UNKNOWN"]))
         result = subprocess.run(["cargo", "clean", "--manifest-path", test], capture_output=True)
     results.append(res)
@@ -129,7 +126,7 @@ def check_smack(results):
     print("\n---------------- Checking results for SMACK - RUST --------------------")
     res = ["SMACK"]
     for test_name in TESTS:
-        test = os.path.join(TEST_DIR, SMACK_DIR, test_name + ".rs")
+        test = os.path.join(SMACK_DIR, test_name + ".rs")
         res.append(check_verification_result(["smack", "--unroll", "3",  test], "SMACK found no errors with unroll bound 3", ["doesn't have a size known at compile-time"]))
     results.append(res)
 

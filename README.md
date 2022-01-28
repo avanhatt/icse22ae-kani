@@ -272,7 +272,7 @@ To compare each tool, we provide a Python `compare_tools.py` script. This script
 
 To reproduce Table 1, run the following inside the Docker:
 ```
-cd /icse22ae-kani
+cd /icse22ae-kani/tests
 python3 compare_tools.py
 ```
 

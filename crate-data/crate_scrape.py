@@ -12,7 +12,7 @@ import argparse
 REPORT_EXPLICIT_CMD = r"grep -or '\bdyn\b' --include='*.rs' . | wc -l"
 
 # TODO: add debug build of rustc to Docker
-REPORT_IMPLICIT_CMD = r"RUSTC=/Volumes/Fiend/rust/build/x86_64-apple-darwin/" \
+REPORT_IMPLICIT_CMD = r"RUSTC=/rust/build/x86_64-unknown-linux-gnu/" \
     "stage1/bin/rustc RUSTC_LOG=rustc_codegen_ssa cargo build 2>&1 | " \
     "grep get_vtable | wc -l"
 

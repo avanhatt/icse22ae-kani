@@ -7,9 +7,7 @@ First, install Docker using the instructions for your host system as described [
 Then, run an interactive Docker session with:
 
 ```
-docker run -v <path-to-artifact>:/icse22ae-kani -it icse22ae-kani:latest 
+docker run -i -t --rm ghcr.io/avanhatt/icse22ae-kani:0.0
 ```
-
-Where <path-to-artifact> is the root directory of this file.
 
 To exit the Docker session, run `ctrl+d`.

@@ -237,16 +237,15 @@ ENV Z3_DIR=${USER_HOME}/z3/z3-${Z3_VERSION}-x64-ubuntu-16.04
 # KLEE
 USER root
 WORKDIR ${USER_HOME}
-COPY build_googletest .
-COPY build_klee .
-RUN chown ${USERNAME} -R build_googletest build_klee
+COPY build_scripts build_scripts
+RUN chown ${USERNAME} -R build_scripts
 
 USER ${USERNAME}
 WORKDIR ${USER_HOME}
 
 ARG GTEST_VERSION=1.7.0
 ENV GTEST_DIR=${USER_HOME}/googletest-release-${GTEST_VERSION}
-RUN sh build_googletest
+RUN sh build_scripts/build_googletest
 
 ARG UCLIBC_VERSION=klee_uclibc_v1.2
 
@@ -254,7 +253,7 @@ ARG LLVM_VERSION=10
 ENV LLVM_VERSION=${LLVM_VERSION}
 
 ARG KLEE_VERSION=c51ffcd377097ee80ec9b0d6f07f8ea583a5aa1d
-RUN sh build_klee
+RUN sh build_scripts/build_klee
 
 # SEAHORN
 USER ${USERNAME}
@@ -391,7 +390,7 @@ ENV PATH=/home/usr/smack-deps/corral:$PATH
 RUN rustup install nightly-2021-03-01-x86_64-unknown-linux-gnu
 RUN smack --version
 
-###########################     Copy test files     ###########################
+###########################    Sanity check tools    ###########################
 USER root
 RUN mkdir /icse22ae-kani
 WORKDIR /icse22ae-kani
@@ -402,10 +401,27 @@ RUN kani --help
 RUN cargo-verify --help
 RUN smack --help
 
+###########################    Copy tests    ###########################
+COPY tests tests
 
 ###########################     Crate data     ###########################
 
 COPY crate-data crate-data
+
+WORKDIR /
+# Check out the Rust commit we used.
+RUN git clone https://github.com/rust-lang/rust.git
+WORKDIR rust
+RUN git checkout 0a56eb11fafdd3c9d86c100b6b90505f5f9fdb00
+# Configure for debug build.
+RUN printf 'profile = "user"\n\
+changelog-seen = 2\n\
+[rust]\n\
+debug-logging = true' >> config.toml
+# Dependencies.
+RUN apt-get install -y cmake ninja-build
+# Build the Rust toolchain.
+RUN python3 x.py build --stage 1 -j 40
 
 ###########################     Case studies     ###########################
 
