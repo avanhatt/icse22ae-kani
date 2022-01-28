@@ -20,8 +20,8 @@ We compare two versions of Kani, one with our new function pointer restriction a
 3. **4.3: Dynamic Dispatch Test Suite.** We compare the cases handled by Kani and other related Rust verification tools. For 8 selected cases, we compare Kani with Crux-MIR, Rust Verification Tools - Seahorn, Rust Verification Tools - KLEE, SMACK - Rust, Prusti, and CRUST. We also present our suite of 40 total verification test cases for other researchers to use. For this artifact, reviewers should be able to reproduce the results of Table 1.
 
 There are two components to this artifact:
-1. **Kani Rust Verifier (Kani)** This is our publicly available verifier for Rust. Kani (formerly known as the Rust Model Checker (kani)) contains code from the Rust compiler and is distributed under the terms of both the MIT license and the Apache License (Version 2.0).
-2. **Verification test cases and comparison to related work** Our contributions include an open-source 
+1. **Kani Rust Verifier (Kani)** This is our publicly available verifier for Rust. Kani (formerly known as the Rust Model Checker (kani)) contains code from the Rust compiler and is distributed under the terms of both the MIT license and the Apache License (Version 2.0). We also include two case studies of the performance of Kani on example from the open source Firecracker project.
+2. **Verification test cases and comparison to related work** Our contributions include an open-source suite of verification test cases, kept up-to-date on Github. In addition, we translate 8 representative cases to the syntax of related work tools. Reproducing this component requires a very large number of software dependencies, since each tool is build on a different language stack (i.e., multiple versions of LLVM, Haskell, OCaml, etc).
   
 We estimate the required components of this artifact to take around 1 hour of reviewer time.
 
@@ -53,11 +53,41 @@ docker run -v <path-to-artifact>/icse22ae-kani -it icse22ae-kani:latest
 ```
 
 # Part 1: Section 4.1: Prevalence of dynamic trait objects.
-#### Time estimate: XX minutes.
+#### Time estimate: 5 minutes.
 
 This section includes a simple study to get a rough estimate of the prevalence of our feature of interest, dynamic trait objects, within the Rust ecosystem. 
 
 This component of the artifact consists of a python script that (1) downloads the top 500 crates sorted by greatest number of downloads, (2) estimates the number of explicit trait objects by search for the `dyn` keywords, and (3) estimates the number of implicit dynamic trait objects by searching a debug output of compiling with Rust for the line `get_vtable`, which is logged at vtable use.
+
+Run the script with:
+```bash
+cd /icse22ae-kani/crate-data
+time make
+```
+
+You should see the following summary, where `nonzero-pct` indicates the percentage of crates where each type of dynamic trait object is found.
+```
+Summary for trait counts
+python3 summarize.py < explicit.json
+{
+  "mean": 5.884,
+  "median": 0.0,
+  "nonzero": 189,
+  "nonzero-pct": "38",
+  "total": 500
+}
+python3 summarize.py < implicit.json
+{
+  "mean": 0,
+  "median": 0.0,
+  "nonzero": 0,
+  "nonzero-pct": "0",
+  "total": 500
+}
+```
+
+
+Note: by default this will use the already-downloaded crate data. To optionally re-download the data, run `rm /icse22ae-kani/crate-data/db-dump.tar.gz` before the previous command.
 
 
 # Part 2: Section 4.2: Case study: Firecracker.
@@ -186,13 +216,13 @@ Again, we write a test harness to run with Kani that checks that parse returns w
     }
 ```
 
-When we run this function under Kani's default settings, the backing symbolic execution engine (CBMC) fails to even finish processing the loop unwinding within over 4 hours. This is because `parse`'s return type of `result::Result<Request, Error>` contains an `Error` type that is implicitly destructed through a dynamic `Drop` trait which has over 300 possible virtual function targets.
+When we run this function under Kani's, even with only basic checks enabled, the backing symbolic execution engine (CBMC) fails to even finish processing the loop unwinding within over 4 hours. This is because `parse`'s return type of `result::Result<Request, Error>` contains an `Error` type that is implicitly destructed through a dynamic `Drop` trait which has over 300 possible virtual function targets.
 
-To demonstrate that the default Kani without restrictions fails to handle this case, run the command below to observe that Kani never gets past loop unwinding*:
+To demonstrate that the default Kani without restrictions fails to handle this case, run the command below to observe that Kani never gets past loop unwinding. Note that we run a `basic-checks` version that only enables basic checking for CBMC, rather than Kani's full checks.
 
 ```bash
 cd /icse22ae-kani/case-study-2/firecracker/
-time case-study-2/firecracker/parse-no-restrictions.sh
+time ./parse-no-restrictions-basic-checks.sh
 ```
 
 You should see commands of the following format printed to the console, without ever reaching a solver state:
@@ -207,8 +237,19 @@ Now, we can run the command _with_ function pointer restrictions enabled. Here, 
 
 ```bash
 cd /icse22ae-kani/case-study-2/firecracker/
-time case-study-2/firecracker/parse-with-restrictions.sh
+time ./parse-with-restrictions-basic-checks.sh
 ```
+
+### Optional: run with more checks
+
+To run with more than just the basic checks, you can run the following two commands. While the second command completes within 16 minutes on the large AWS EC2 instance used in the paper, we found it takes >30 minutes to run on a laptop, so we leave this component as optional. The speedup described in the paper should still be reasonably represented without all checks.
+
+```bash
+# Optional!
+cd /icse22ae-kani/case-study-2/firecracker/
+time ./parse-with-restrictions-all-checks.sh
+```
+
 
 # Part 3: 4.3: Dynamic Dispatch Test Suite.
 #### Time estimate: 5 minutes.
@@ -256,4 +297,4 @@ To rerun any specific tool(s), you can run, for example, `python3 compare_tools.
 
 # End
 
-Exit the Docker terminal with `ctrl+d`. Thanks!
+Exit the Docker terminal with `ctrl+d`. Thank you for your time!

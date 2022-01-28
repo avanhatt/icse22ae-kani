@@ -1,13 +1,13 @@
 .PHONY: COUNTS 
 
 default: COUNTS
-	echo "Summary for explicit trait counts"
+	$(info Summary for trait counts)
 	python3 summarize.py < explicit.json
-	echo "Summary for implicit trait counts"
 	python3 summarize.py < implicit.json
 
 .PRECIOUS: counts.csv
 COUNTS:
+	$(info Scraping trait counts)
 	python3 crate_scrape.py --explicit > explicit.json
 	python3 crate_scrape.py --implicit > implicit.json
 

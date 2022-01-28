@@ -6,7 +6,7 @@ FROM ubuntu:20.04
 USER root
 # Install some system level dependencies
 RUN apt-get update -y && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y sudo git lsb-release universal-ctags
+    DEBIAN_FRONTEND=noninteractive apt-get install -y sudo git lsb-release universal-ctags time parallel vim emacs
 
 # Clone Kani itself 
 RUN git clone -b ae https://github.com/avanhatt/rmc.git
@@ -401,3 +401,33 @@ RUN kani --help
 # RUN cabal v2-exec -- crux-mir foo.rs
 RUN cargo-verify --help
 RUN smack --help
+
+
+###########################     Crate data     ###########################
+
+COPY crate-data crate-data
+
+###########################     Case studies     ###########################
+
+WORKDIR /icse22ae-kani
+RUN mkdir case-study-1
+WORKDIR case-study-1 
+RUN git clone https://github.com/avanhatt/firecracker.git
+WORKDIR firecracker
+RUN git checkout case-study-1
+
+WORKDIR .. 
+RUN git clone https://github.com/avanhatt/vm-superio.git
+WORKDIR vm-superio
+RUN git checkout is_in_loop_mode_true
+
+WORKDIR /icse22ae-kani
+RUN mkdir case-study-2
+WORKDIR case-study-2
+RUN git clone https://github.com/avanhatt/firecracker.git
+WORKDIR firecracker
+RUN git checkout case-study-2
+
+###########################     Final landing spot     ###########################
+
+WORKDIR /icse22ae-kani
