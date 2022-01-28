@@ -47,7 +47,7 @@ We provide our artifact as a [Docker][docker] instance. Users should install Doc
 
 ## Machine requirements
 
-Our full docker image contains 3 related work projects that each have many dependencies (Crux-MIR, Rust Verification Tools, and SMACK), which increases both the size of the instance and the requirements for the host machine.
+Our full Docker image contains 3 related work projects that each have many dependencies (Crux-MIR, Rust Verification Tools, and SMACK), which increases both the size of the instance and the requirements for the host machine.
 
 We also provide a smaller instance that just contains our Kani system and the _results_ of other tools run on each test cases.
 
@@ -57,10 +57,10 @@ We also provide a smaller instance that just contains our Kani system and the _r
 
 The remainder of this artifact assumes all commands are run within the Docker instance.
 
-To interactively run the Docker instance, run the following, where `<path-to-artifact>` is the root directory of this file:
+To interactively run the Docker instance, run the following:
 
 ```
-docker run -v <path-to-artifact>/icse22ae-kani -it icse22ae-kani:latest 
+docker run -i -t --rm ghcr.io/avanhatt/icse22ae-kani:0.0
 ```
 
 # Part 1: Section 4.1: Prevalence of dynamic trait objects.
