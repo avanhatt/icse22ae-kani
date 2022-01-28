@@ -42,6 +42,16 @@ We also provide a smaller instance that just contains our Kani system and the _r
 
 ----
 
+# Part 0: Run the Docker instance
+
+The remainder of this artifact assumes all commands are run within the Docker instance.
+
+To interactively run the Docker instance, run:
+
+```
+docker run -v <path-to-artifact>/icse22ae-kani -it icse22ae-kani:latest 
+```
+
 # Part 1: Section 4.1: Prevalence of dynamic trait objects.
 #### Time estimate: XX minutes.
 
