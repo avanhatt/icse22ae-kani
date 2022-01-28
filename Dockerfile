@@ -78,6 +78,8 @@ WORKDIR ../../crux-mmir
 # Build crux-mir
 RUN cabal v2-install exe:crux-mir --overwrite-policy=always
 
+./translate_libs.sh
+
 WORKDIR ../../
 
 ##################### Google's Rust Verification Tools ########################

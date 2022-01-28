@@ -75,7 +75,7 @@ cd /icse22ae-kani/crate-data
 time make
 ```
 
-You should see the following summary, where `nonzero-pct` indicates the percentage of crates where each type of dynamic trait object is found.
+You should see some per-crate output, then the following summary, where `nonzero-pct` indicates the percentage of crates where each type of dynamic trait object is found, as described in the paper.
 ```
 Summary for trait counts
 python3 summarize.py < explicit.json
@@ -88,16 +88,15 @@ python3 summarize.py < explicit.json
 }
 python3 summarize.py < implicit.json
 {
-  "mean": 0,
-  "median": 0.0,
-  "nonzero": 0,
-  "nonzero-pct": "0",
+  "mean": 149.874,
+  "median": 14.0,
+  "nonzero": 349,
+  "nonzero-pct": "70",
   "total": 500
 }
 ```
 
-
-Note: by default this will use the already-downloaded crate data. To optionally re-download the data, run `rm /icse22ae-kani/crate-data/db-dump.tar.gz` before the previous command.
+Note: by default this will use the already-downloaded crate data at `/icse22ae-kani/crate-data/db-dump.tar.gz`. To optionally re-download the data, run `rm /icse22ae-kani/crate-data/db-dump.tar.gz` before the previous command (this will take >20 minutes, depending on the host machine).
 
 
 # Part 2: Section 4.2: Case study: Firecracker.
@@ -304,6 +303,9 @@ Tests:
 
 To rerun any specific tool(s), you can run, for example, `python3 compare_tools.py --tool kani smack`.
 
+Two other Rust verification tools, Prusti and CRUST, do not support any of the dynamic trait objects we tested. See Prusti's [error on unsized casts][prusti-err], and CRUST's documentation of "[CRUST] currently lacks support for dynamic dispatch of trait methods and for closures" [here][crust].
+
+[prusti-err]: https://github.com/viperproject/prusti-dev/blob/v-2021-11-22-1738/prusti-viper/src/encoder/mir/pure/interpreter/mod.rs#L276
 
 # End
 
