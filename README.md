@@ -53,6 +53,79 @@ This component of the artifact consists of a python script that (1) downloads th
 # Part 2: Section 4.2: Case study: Firecracker.
 #### Time estimate: 30 minutes.
 
+In these case studies, we consider how two different variants of Kani—--one with our new vtable function pointer restrictions, and one
+without--—perform on examples from the open source Firecracker hypervisor written in Rust.
+
+### Case Study 1: Firecracker Serial Device
+
+In this first example, we consider a case that uses explicit dynamic trait object types.
+
+This component of Firecracker defines the following trait:
+
+```rust
+// Docker at: /icse22ae-kani/case-study-1/firecracker/src/devices/src/bus.rs
+pub trait BusDevice: AsAny + Send {
+    /// Reads at `offset` from this device
+    fn read(&mut self, offset: u64, data: &mut [u8]) {}
+    /// Writes at `offset` into this device
+    fn write(&mut self, offset: u64, data: &[u8]) {}
+}
+```
+
+We add a straightforward test harness with Kani to check that `read` and `write` can be dynamically dispatched. First, the test sets up necessary structs, then checks the value from `read` and `write` dispatched dynamically through an explicit `dyn BusDevice` trait object.
+
+```rust
+// Docker at: /icse22ae-kani/case-study-1/firecracker/src/devices/src/legacy/serial.rs
+fn serial_harness() {
+    // --------------------------------- SETUP --------------------------------
+    // This test requires the Serial device be in loopback mode, i.e., 
+    // setting is_in_loop_mode to return true in 
+    // https://github.com/rust-vmm/vm-superio/blob/main/crates/vm-superio/src/serial.rs
+    let serial_out = SharedBuffer::new();
+    let intr_evt = EventFdTrigger::new(EventFd{}); 
+    let mut serial = SerialDevice {
+    serial: Serial::new(
+            intr_evt,
+            Box::new(serial_out.clone()),
+        ),
+        input: None,
+    };
+    let bytes: [u8; 1] = kani::any();
+
+    // ------------------------- Dynamic trait objects ------------------------
+    // Dynamic dispatch through `dyn BusDevice`
+    <dyn BusDevice>::write(&mut serial, 0u64, &bytes);
+
+    let mut read = [0x00; 1];
+
+    // Dynamic dispatch through `dyn BusDevice`
+    <dyn BusDevice>::read(&mut serial, 0u64, &mut read);
+
+    // Verify expected value is read
+    assert!(bytes[0] == read[0]);
+}
+```
+
+First, we'll run Kani on this harness without restrictions. `serial-no-restrictions.sh` is a bash script that runs Kani by invoking the custom Kani backend to the Rust compiler, combining the produced CBMC files per crate, anf finally invoking the solver.
+
+Run the script with:
+```bash
+cd /icse22ae-kani/case-study-1/firecracker/
+time case-study-1/firecracker/serial-no-restrictions.sh
+```
+
+This should complete with `VERIFICATION SUCCESSFUL` in around 2 minutes.
+
+The second version of this script, `serial-no-restrictions.sh`, adds a flag to restrict function pointers based on Rust-level type information.  
+
+Run the script with:
+```bash
+cd /icse22ae-kani/case-study-1/firecracker/
+time case-study-1/firecracker/serial-no-restrictions.sh
+```
+
+Depending on the host machine, this will complete with `VERIFICATION SUCCESSFUL` in a time 5%-50% faster than the example without restrictions.
+
 # Part 3: 4.3: Dynamic Dispatch Test Suite.
 #### Time estimate: 5 minutes.
 
