@@ -132,7 +132,7 @@ First, we'll run Kani on this harness without restrictions. `serial-no-restricti
 Run the script with:
 ```bash
 cd /icse22ae-kani/case-study-1/firecracker/
-time case-study-1/firecracker/serial-no-restrictions.sh
+time ./serial-no-restrictions.sh
 ```
 
 This should complete with `VERIFICATION SUCCESSFUL` in around 2 minutes.
