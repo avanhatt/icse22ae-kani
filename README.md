@@ -137,12 +137,12 @@ time ./serial-no-restrictions.sh
 
 This should complete with `VERIFICATION SUCCESSFUL` in around 2 minutes.
 
-The second version of this script, `serial-no-restrictions.sh`, adds a flag to restrict function pointers based on Rust-level type information.  
+The second version of this script, `serial-with-restrictions.sh`, adds a flag to restrict function pointers based on Rust-level type information.
 
 Run the script with:
 ```bash
 cd /icse22ae-kani/case-study-1/firecracker/
-time case-study-1/firecracker/serial-no-restrictions.sh
+time ./serial-with-restrictions.sh
 ```
 
 Depending on the host machine, this will complete with `VERIFICATION SUCCESSFUL` in a time 5%-50% faster than the example without restrictions.
