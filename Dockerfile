@@ -73,12 +73,12 @@ RUN rustup default nightly-2020-03-22
 RUN cargo install --locked
 RUN mir-json --version
 
-WORKDIR ../../crux-mmir
+WORKDIR ../../crux-mir
 
 # Build crux-mir
 RUN cabal v2-install exe:crux-mir --overwrite-policy=always
 
-./translate_libs.sh
+RUN ./translate_libs.sh
 
 WORKDIR ../../
 
