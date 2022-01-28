@@ -39,6 +39,9 @@ CRUX_MIR_DIR = "crux-mir"
 RVT_DIR = "rvt"
 SMACK_DIR = "smack"
 
+CRUX_MIR_INSTALLED_DIR = "/crucible/crux-mir"
+CWD = "/icse22ae-kani/tests"
+
 FAILURE = "FAILURE"
 SUCCESS = "SUCCESS"
 UNKNOWN = "UNKNOWN"
@@ -50,7 +53,7 @@ def check_verification_result(cmd, success_str, failure_strs):
     """
     print("\tRunning command:", " ".join(cmd))
     result = subprocess.run(cmd, capture_output=True)
-    output = str(result.stdout)
+    output = str(result.stdout) + str(result.stderr)
     success_found = success_str in output
     failure_found = any([f in output for f in failure_strs])
 
@@ -86,14 +89,17 @@ def check_kani(results):
     results.append(res)
 
 def check_crux_mir(results):
-    """Check results for Crux-MIR run on the single Rust test files.
+    """Check results for Crux-MIR run on the single Rust test files. Crux-MIR needs to
+    be run from its installation directory.
     """
     print("\n------------------- Checking results for Crux-MIR ---------------------")
+    os.chdir(CRUX_MIR_INSTALLED_DIR)
     res = ["Crux-MIR"]
     for test_name in TESTS:
-        test = os.path.join(CRUX_MIR_DIR, test_name + ".rs")
-        res.append(check_verification_result(["/root/.cabal/bin/crux-mir", test], "Overall status: Valid.", ["Overall status: Invalid."]))
+        test = os.path.join(CWD, CRUX_MIR_DIR, test_name + ".rs")
+        res.append(check_verification_result(["cabal", "v2-exec", "--", "crux-mir", test], "Overall status: Valid.", ["Overall status: Invalid.", "unsupported ty", "standalone use of `dyn` is not supported"]))
     results.append(res)
+    os.chdir(CWD)
 
 def check_rvt_klee(results):
     """Check results for Rust Verification Tools - KLEE, which needs to be run 
@@ -106,7 +112,6 @@ def check_rvt_klee(results):
         res.append(check_verification_result(["cargo-verify", "--backend=klee", "--tests", "--manifest-path", test], "VERIFICATION_RESULT: VERIFIED", ["VERIFICATION_RESULT: ERROR", "VERIFICATION_RESULT: UNKNOWN"]))
         result = subprocess.run(["cargo", "clean", "--manifest-path", test], capture_output=True)
     results.append(res)
-
 
 def check_rvt_seahorn(results):
     """Check results for Rust Verification Tools - Seahorn, which needs to be run 
