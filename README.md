@@ -203,7 +203,7 @@ To demonstrate that the default Kani without restrictions fails to handle this c
 
 ```bash
 cd /icse22ae-kani/case-study-2/firecracker/
-time case-study-2/firecracker/parse-no-restrictions.sh
+time ./parse-no-restrictions.sh
 ```
 
 You should see commands of the following format printed to the console, without ever reaching a solver state:
@@ -218,7 +218,7 @@ Now, we can run the command _with_ function pointer restrictions enabled. Here, 
 
 ```bash
 cd /icse22ae-kani/case-study-2/firecracker/
-time case-study-2/firecracker/parse-with-restrictions.sh
+time ./parse-with-restrictions.sh
 ```
 
 # Part 3: 4.3: Dynamic Dispatch Test Suite.
