@@ -7,7 +7,7 @@ First, install Docker using the instructions for your host system as described [
 Then, run an interactive Docker session with:
 
 ```
-docker run -v <path-to-artifact>/icse22ae-kani -it icse22ae-kani:latest 
+docker run -v <path-to-artifact>:/icse22ae-kani -it icse22ae-kani:latest 
 ```
 
 Where <path-to-artifact> is the root directory of this file.

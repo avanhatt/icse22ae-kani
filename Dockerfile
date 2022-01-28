@@ -384,8 +384,11 @@ RUN rustup install nightly-2021-03-01-x86_64-unknown-linux-gnu
 # Build SMACK
 RUN sudo bin/build.sh
 
+USER root
 # Add envinronment
-RUN echo "source /home/usr/smack.environment" >> /home/usr/.bashrc
+ENV PATH=/home/usr/smack-deps/corral:$PATH
+
+RUN rustup install nightly-2021-03-01-x86_64-unknown-linux-gnu
 RUN smack --version
 
 ###########################     Copy test files     ###########################
@@ -395,6 +398,6 @@ WORKDIR /icse22ae-kani
 
 RUN touch foo.rs
 RUN kani --help
-RUN cabal v2-exec -- crux-mir foo.rs
+# RUN cabal v2-exec -- crux-mir foo.rs
 RUN cargo-verify --help
 RUN smack --help

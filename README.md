@@ -46,7 +46,7 @@ We also provide a smaller instance that just contains our Kani system and the _r
 
 The remainder of this artifact assumes all commands are run within the Docker instance.
 
-To interactively run the Docker instance, run:
+To interactively run the Docker instance, run the following, where `<path-to-artifact>` is the root directory of this file:
 
 ```
 docker run -v <path-to-artifact>/icse22ae-kani -it icse22ae-kani:latest 
@@ -136,6 +136,80 @@ time case-study-1/firecracker/serial-no-restrictions.sh
 
 Depending on the host machine, this will complete with `VERIFICATION SUCCESSFUL` in a time 5%-50% faster than the example without restrictions.
 
+### Case Study 2: Firecracker Firecracker Block Device Parser
+
+In this second case study, we consider an example where an _implicit_ dynamic trait objects poses surprising challenges for verification.
+
+This component of Firecracker contains the following function to parse virtual guest transactions.
+
+```rust
+// Docker at /icse22ae-kani/case-study-2/firecracker/src/devices/src/virtio/block/request.rs
+impl Request {
+    pub fn parse(
+        avail_desc: &DescriptorChain,
+        mem: &GuestMemoryMmap,
+    ) -> result::Result<Request, Error> {
+        // ...
+    }
+```
+
+Again, we write a test harness to run with Kani that checks that parse returns without any memory safety issues:
+```rust
+    // Docker at /icse22ae-kani/case-study-2/firecracker/src/devices/src/virtio/block/request.rs
+    fn parse_harness() {
+        let mem = GuestMemoryMmap::new();
+        let queue_size: u16 = kani::any();
+        kani::assume(is_nonzero_pow2(queue_size));
+
+        let index: u16 = kani::any();
+        let desc_table = GuestAddress(kani::any::<u64>());
+        {
+            match DescriptorChain::checked_new(&mem, desc_table, queue_size, index) {
+                Some(desc) => {
+                    kani::assume((index as u64) * 16 < u64::MAX - desc_table.0);
+                    let addr = desc_table.0 + (index as u64) * 16;
+                    assert!(desc.index == index);
+                    assert!(desc.index < queue_size);
+                    if desc.has_next() {
+                        assert!(desc.next < queue_size);
+                    }
+
+                    // Call `parse`, the function under verification
+                    match Request::parse(&desc, &mem) {
+                        Ok(req) => {}
+                        Err(err) => {}
+                    }
+                },
+                None => {},
+            }
+        }
+    }
+```
+
+When we run this function under Kani's default settings, the backing symbolic execution engine (CBMC) fails to even finish processing the loop unwinding within over 4 hours. This is because `parse`'s return type of `result::Result<Request, Error>` contains an `Error` type that is implicitly destructed through a dynamic `Drop` trait which has over 300 possible virtual function targets.
+
+To demonstrate that the default Kani without restrictions fails to handle this case, run the command below to observe that Kani never gets past loop unwinding*:
+
+```bash
+cd /icse22ae-kani/case-study-2/firecracker/
+time case-study-2/firecracker/parse-no-restrictions.sh
+```
+
+You should see commands of the following format printed to the console, without ever reaching a solver state:
+```
+adding goto-destructor code on jump to 'bb52'
+file /scratch/alexa/icse22ae-kani/case-study-2/firecracker/src/devices/src/virtio/mmio.rs line 313 column 21 function <virtio::mmio::MmioTransport as bus::BusDevice>::write: adding goto-destructor code on jump to 'bb53'
+```
+
+Once you have seen enough of these statements (or after 20 minutes has past), kill the command with `ctrl-C`.
+
+Now, we can run the command _with_ function pointer restrictions enabled. Here, the loop unwinding processing should complete within 5 minutes, with the entire verification completing within 20 minutes (depending on host machine).
+
+```bash
+cd /icse22ae-kani/case-study-2/firecracker/
+time case-study-2/firecracker/parse-with-restrictions.sh
+```
+
 # Part 3: 4.3: Dynamic Dispatch Test Suite.
 #### Time estimate: 5 minutes.
 
@@ -151,4 +225,35 @@ cd /icse22ae-kani
 python3 compare_tools.py
 ```
 
+After reporting the results as each tool is run, you should see a results summary table of the following form:
+
+```
+---------------------- Results summary table --------------------------
+Tests:
+0 : simple-trait-pointer
+1 : simple-trait-boxed
+2 : auto-trait-pointer
+3 : fn-closure-pointer
+4 : fnonce-closure-boxed
+5 : generic-trait-pointer
+6 : explicit-drop-boxed
+7 : explicit-drop-pointer
+
+  Tests  Kani     Crux-MIR    RVT-SH    RVT-KLEE    SMACK
+-------  -------  ----------  --------  ----------  -------
+      1  SUCCESS  UNKNOWN     FAILURE   SUCCESS     SUCCESS
+      2  SUCCESS  UNKNOWN     FAILURE   SUCCESS     FAILURE
+      3  SUCCESS  UNKNOWN     FAILURE   SUCCESS     SUCCESS
+      4  SUCCESS  UNKNOWN     FAILURE   SUCCESS     SUCCESS
+      5  SUCCESS  UNKNOWN     FAILURE   SUCCESS     FAILURE
+      6  SUCCESS  UNKNOWN     FAILURE   SUCCESS     SUCCESS
+      7  SUCCESS  UNKNOWN     SUCCESS   SUCCESS     FAILURE
+      8  SUCCESS  UNKNOWN     SUCCESS   SUCCESS     SUCCESS
+```
+
 To rerun any specific tool(s), you can run, for example, `python3 compare_tools.py --tool kani smack`.
+
+
+# End
+
+Exit the Docker terminal with `ctrl+d`. Thanks!
