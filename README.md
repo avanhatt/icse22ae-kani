@@ -1,5 +1,7 @@
 # Artifact Evaluation: Kani Rust Verifier (Kani)
 
+These instructions are hosted in an archival repository at https://doi.org/10.5281/zenodo.5914906.
+
 
 # Abstract
 This directory contains the evaluation scripts for our ICSE SEIP paper, Verifying Dynamic Trait Objects in Rust.
@@ -32,9 +34,9 @@ We compare two versions of Kani, one with our new function pointer restriction a
 
 There are two components to this artifact:
 1. **Kani Rust Verifier (Kani):** This is our publicly available verifier for Rust. Kani (formerly known as the Rust Model Checker (RMC)) contains code from the Rust compiler and is distributed under the terms of both the MIT license and the Apache License (Version 2.0). We also include two case studies of the performance of Kani on example from the open source Firecracker project.
-2. **Verification test cases and comparison to related work:** Our contributions include an open-source suite of verification test cases, kept up-to-date on [our project Github][dyn-tests]. In addition, we translate 8 representative cases to the syntax of related work tools. Reproducing this component requires a very large number of software dependencies, since each tool is build on a different language stack (i.e., multiple versions of LLVM, Haskell, OCaml, etc). We have packaged these dependencies into a Docker instance; however, the instance is around 28GB.
+2. **Verification test cases and comparison to related work:** Our contributions include an open-source suite of verification test cases, kept up-to-date on [our project Github][dyn-tests]. In addition, we translate 8 representative cases to the syntax of related work tools. Reproducing this component requires a very large number of software dependencies, since each tool is build on a different language stack (i.e., multiple versions of Rust, LLVM, Haskell, OCaml, etc). We have packaged these dependencies into a Docker instance; however, the instance is around 30GB.
   
-We estimate the required components of this artifact to take around 1 hour of reviewer time.
+We estimate the required components of this artifact to take around 1.5 hour of reviewer time.
 
 [dyn-tests]: https://github.com/model-checking/kani/tree/main/tests/kani/DynTrait
 
@@ -51,18 +53,20 @@ We provide our artifact as a [Docker][docker] instance. Users should install Doc
 
 ## Machine requirements
 
-Our full Docker image contains 3 related work projects that each have many dependencies (Crux-MIR, Rust Verification Tools, and SMACK), which increases both the size of the instance and the requirements for the host machine. The instance is around 28GB. 
+Our full Docker image contains 3 related work projects that each have many dependencies (Crux-MIR, Rust Verification Tools, and SMACK), which increases both the size of the instance and the requirements for the host machine. The instance is around 30GB. 
 
 ----
 
-# Part 0: Run the Docker instance
+# Part 0: Fetch and run the Docker instance
+
+#### Time estimate: 30 minutes (depending on internet connection).
 
 The remainder of this artifact assumes all commands are run within the Docker instance.
 
 To interactively run the Docker instance, run the following:
 
 ```
-docker run -i -t --rm ghcr.io/avanhatt/icse22ae-kani:0.0
+docker run -i -t --rm ghcr.io/avanhatt/icse22ae-kani:0.1
 ```
 
 # Part 1: Section 4.1: Prevalence of dynamic trait objects.
