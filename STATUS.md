@@ -6,7 +6,8 @@ We are seeking the following badges:
 
 ### 1. Artifact Available
 
-Our artifact is available as an archival repository on [Zenodo][] with DOI: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5914907.svg)](https://doi.org/10.5281/zenodo.5914907)
+Our artifact is available as an archival repository on [Zenodo][] with DOI: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5915215.svg)](https://doi.org/10.5281/zenodo.5915215)
+
 
 In addition, our [Kani Rust Verifier][kani] has been open-source throughout its development.
 
@@ -16,5 +17,5 @@ We have provided code, data, and scripts to reproduce the main empirical claims 
 
 The [main Kani source code][kani] is publicly under active development.  
 
-[zenodo]: https://zenodo.org/record/5914907#.YfSNBC1h1B0
+[zenodo]: https://zenodo.org/record/5915215#.YfSlMS1h1B0
 [kani]: https://github.com/model-checking/kani.
