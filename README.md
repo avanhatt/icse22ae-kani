@@ -346,6 +346,7 @@ Tests:
       7  SUCCESS  FAILURE     SUCCESS   SUCCESS     FAILURE
       8  SUCCESS  SUCCESS     SUCCESS   SUCCESS     SUCCESS
 ```
+_Note, we are seeing more failures on Docker for RVT-SH than what we observed in the paper._
 
 To rerun any specific tool(s), you can run, for example, `python3 compare_tools.py --tool kani smack`.
 
