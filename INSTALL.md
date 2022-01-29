@@ -11,3 +11,5 @@ docker run -i -t --rm ghcr.io/avanhatt/icse22ae-kani:0.0
 ```
 
 To exit the Docker session, run `ctrl+d`.
+
+[docker]:https://docs.docker.com/engine/installation/

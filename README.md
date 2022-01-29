@@ -17,10 +17,11 @@ In this artifact, we provide instructions for reproducing each of a major empiri
 This artifact includes steps to replicate the following results:
 
 1. **Section 4.1: Prevalence of dynamic trait objects.** We conducted a simple study to estimate the prevalence of dynamic trait objects in the 500 most downloaded crates (packages) on crates.io, the Rust package repository.  This artifact should reproduce that 37% of crates use explicit dynamic trait objects, and 70% of crates use them implicitly.
-2. **Section 4.2: Case study: Firecracker.** We conduct case studies on Firecracker, an open source virtualization technology.
+2. **Section 4.2: Case study: Firecracker.** We conduct case studies on [Firecracker][], an open source virtualization technology.
 We compare two versions of Kani, one with our new function pointer restriction algorithm and one without. Reviewers should be able to reproduce an improvement of 5% in verification time for the first case, and an improvement of 15× for the second case.
 3. **4.3: Dynamic Dispatch Test Suite.** We compare the cases handled by Kani and other related Rust verification tools. For 8 selected cases, we compare Kani with [Crux-MIR][], [Rust Verification Tools][rvt] - [Seahorn][], Rust Verification Tools - [KLEE][], [SMACK - Rust][smack-rust], [Prusti][], and [CRUST][]. We also present our suite of 40 total verification test cases for other researchers to use. For this artifact, reviewers should be able to reproduce the results of Table 1.
 
+[Firecracker]: https://github.com/firecracker-microvm/firecracker
 [smack-rust]: https://soarlab.org/publications/2018_atva_bhr/
 [CRUST]: https://ieeexplore.ieee.org/document/7371997
 [Prusti]: https://github.com/viperproject/prusti-dev
@@ -31,9 +32,11 @@ We compare two versions of Kani, one with our new function pointer restriction a
 
 There are two components to this artifact:
 1. **Kani Rust Verifier (Kani):** This is our publicly available verifier for Rust. Kani (formerly known as the Rust Model Checker (RMC)) contains code from the Rust compiler and is distributed under the terms of both the MIT license and the Apache License (Version 2.0). We also include two case studies of the performance of Kani on example from the open source Firecracker project.
-2. **Verification test cases and comparison to related work:** Our contributions include an open-source suite of verification test cases, kept up-to-date on Github. In addition, we translate 8 representative cases to the syntax of related work tools. Reproducing this component requires a very large number of software dependencies, since each tool is build on a different language stack (i.e., multiple versions of LLVM, Haskell, OCaml, etc).
+2. **Verification test cases and comparison to related work:** Our contributions include an open-source suite of verification test cases, kept up-to-date on [our project Github][dyn-tests]. In addition, we translate 8 representative cases to the syntax of related work tools. Reproducing this component requires a very large number of software dependencies, since each tool is build on a different language stack (i.e., multiple versions of LLVM, Haskell, OCaml, etc). We have packaged these dependencies into a Docker instance; however, the instance is around 28GB.
   
 We estimate the required components of this artifact to take around 1 hour of reviewer time.
+
+[dyn-tests]: https://github.com/model-checking/kani/tree/main/tests/kani/DynTrait
 
 ----
 
@@ -44,11 +47,11 @@ We estimate the required components of this artifact to take around 1 hour of re
 
 We provide our artifact as a [Docker][docker] instance. Users should install Docker based on their system's instructions.
 
+[docker]: https://docs.docker.com/engine/installation/
+
 ## Machine requirements
 
-Our full Docker image contains 3 related work projects that each have many dependencies (Crux-MIR, Rust Verification Tools, and SMACK), which increases both the size of the instance and the requirements for the host machine.
-
-We also provide a smaller instance that just contains our Kani system and the _results_ of other tools run on each test cases.
+Our full Docker image contains 3 related work projects that each have many dependencies (Crux-MIR, Rust Verification Tools, and SMACK), which increases both the size of the instance and the requirements for the host machine. The instance is around 28GB. 
 
 ----
 
@@ -99,7 +102,7 @@ python3 summarize.py < implicit.json
 }
 ``
 
-Note: by default this will use the already-downloaded crate data at `/icse22ae-kani/crate-data/db-dump.tar.gz`. To optionally re-download the data, run `rm /icse22ae-kani/crate-data/db-dump.tar.gz` before the previous command (this will take >30 minutes, depending on the host machine).
+Note: by default this will use the already-downloaded crate data at `/icse22ae-kani/crate-data/db-dump.tar.gz`. To optionally re-download the data, run `rm /icse22ae-kani/crate-data/db-dump.tar.gz` before the previous command (the command will then take an additional 30+ minutes, depending on the host machine).
 
 ### Optional: run for all 500 crates
 
@@ -135,12 +138,12 @@ python3 summarize.py < implicit.json
 # Part 2: Section 4.2: Case study: Firecracker.
 #### Time estimate: 30 minutes.
 
-In these case studies, we consider how two different variants of Kani—--one with our new vtable function pointer restrictions, and one
-without--—perform on examples from the open source Firecracker hypervisor written in Rust.
+In these case studies, we consider how two different variants of Kani---one with our new vtable function pointer restrictions (as described in Section 3.3), and one
+without---perform on examples from the open source [Firecracker][] hypervisor written in Rust.
 
 ### Case Study 1: Firecracker Serial Device
 
-In this first example, we consider a case that uses explicit dynamic trait object types.
+In this first illustrative example, we consider a case that uses explicit dynamic trait object types.
 
 This component of Firecracker defines the following trait:
 
@@ -196,7 +199,10 @@ cd /icse22ae-kani/case-study-1/firecracker/
 time ./serial-no-restrictions.sh
 ```
 
-This should complete with `VERIFICATION SUCCESSFUL` in around 2 minutes.
+This should complete with in around 2 minutes with:
+```
+VERIFICATION SUCCESSFUL
+```
 
 The second version of this script, `serial-with-restrictions.sh`, adds a flag to restrict function pointers based on Rust-level type information.
 
@@ -206,11 +212,14 @@ cd /icse22ae-kani/case-study-1/firecracker/
 time ./serial-with-restrictions.sh
 ```
 
-Depending on the host machine, this will complete with `VERIFICATION SUCCESSFUL` in a time 5%-50% faster than the example without restrictions.
+Depending on the host machine, this will complete with in a time 5%-50% faster than the example without restrictions, again with:
+```
+VERIFICATION SUCCESSFUL
+```
 
 ### Case Study 2: Firecracker Firecracker Block Device Parser
 
-In this second case study, we consider an example where an _implicit_ dynamic trait objects poses surprising challenges for verification.
+In this second, larger case study, we consider an example where an _implicit_ dynamic trait objects poses surprising challenges for verification. 
 
 This component of Firecracker contains the following function to parse virtual guest transactions.
 
@@ -282,16 +291,20 @@ cd /icse22ae-kani/case-study-2/firecracker/
 time ./parse-with-restrictions-basic-checks.sh
 ```
 
+Now, this should complete with:
+```
+VERIFICATION SUCCESSFUL
+```
+
 ### Optional: run with more checks
 
-To run with more than just the basic checks, you can run the following two commands. While the second command completes within 16 minutes on the large AWS EC2 instance used in the paper, we found it takes >30 minutes to run on a laptop, so we leave this component as optional. The speedup described in the paper should still be reasonably represented without all checks.
+To run with more than just the basic checks, you can run the following two commands. While the second command completes within 16 minutes on the large AWS EC2 instance used in the paper, we found it takes >30 minutes to run on a laptop, so we leave this component as optional. The speedup described in the paper should still be reasonably represented without additional checks.
 
 ```bash
 # Optional!
 cd /icse22ae-kani/case-study-2/firecracker/
-time ./parse-with-restrictions-all-checks.sh
+time ./parse-with-restrictions-more-checks.sh
 ```
-
 
 # Part 3: 4.3: Dynamic Dispatch Test Suite.
 #### Time estimate: 5 minutes.
@@ -324,14 +337,14 @@ Tests:
 
   Tests  Kani     Crux-MIR    RVT-SH    RVT-KLEE    SMACK
 -------  -------  ----------  --------  ----------  -------
-      1  SUCCESS  UNKNOWN     FAILURE   SUCCESS     SUCCESS
-      2  SUCCESS  UNKNOWN     FAILURE   SUCCESS     FAILURE
-      3  SUCCESS  UNKNOWN     FAILURE   SUCCESS     SUCCESS
-      4  SUCCESS  UNKNOWN     FAILURE   SUCCESS     SUCCESS
-      5  SUCCESS  UNKNOWN     FAILURE   SUCCESS     FAILURE
-      6  SUCCESS  UNKNOWN     FAILURE   SUCCESS     SUCCESS
-      7  SUCCESS  UNKNOWN     SUCCESS   SUCCESS     FAILURE
-      8  SUCCESS  UNKNOWN     SUCCESS   SUCCESS     SUCCESS
+      1  SUCCESS  SUCCESS     FAILURE   SUCCESS     SUCCESS
+      2  SUCCESS  FAILURE     FAILURE   SUCCESS     FAILURE
+      3  SUCCESS  FAILURE     FAILURE   SUCCESS     SUCCESS
+      4  SUCCESS  FAILURE     FAILURE   SUCCESS     SUCCESS
+      5  SUCCESS  FAILURE     FAILURE   SUCCESS     FAILURE
+      6  SUCCESS  FAILURE     FAILURE   SUCCESS     SUCCESS
+      7  SUCCESS  FAILURE     SUCCESS   SUCCESS     FAILURE
+      8  SUCCESS  SUCCESS     SUCCESS   SUCCESS     SUCCESS
 ```
 
 To rerun any specific tool(s), you can run, for example, `python3 compare_tools.py --tool kani smack`.
@@ -339,6 +352,12 @@ To rerun any specific tool(s), you can run, for example, `python3 compare_tools.
 Two other Rust verification tools, Prusti and CRUST, do not support any of the dynamic trait objects we tested. See Prusti's [error on unsized casts][prusti-err], and CRUST's documentation of "[CRUST] currently lacks support for dynamic dispatch of trait methods and for closures" [here][crust].
 
 [prusti-err]: https://github.com/viperproject/prusti-dev/blob/v-2021-11-22-1738/prusti-viper/src/encoder/mir/pure/interpreter/mod.rs#L276
+
+# Further notes on Reusability
+
+To prepare this artifact, this repository's `Dockerfile` includes installation of 4 Rust verification tools---Kani, Crux-MIR, Rust Verification Tools, and SMACK - Rust (though any mistakes in the installation or usage are solely our fault, not the fault of the authors of those tools!) These installation steps may be useful to other researchers aiming to compare tools for verifying Rust. 
+
+In addition, our `crate-data/crate_scrape.py` tool may be useful for other analyses on popular Rust crates---researchers can change the bash command run in the script to produce custom numerical results.
 
 # End
 
