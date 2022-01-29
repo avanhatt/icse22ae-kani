@@ -94,10 +94,10 @@ python3 summarize.py < explicit.json
 }
 python3 summarize.py < implicit.json
 {
-  "mean": 32.42,
-  "median": 7.0,
-  "nonzero": 39,
-  "nonzero-pct": "78",
+  "mean": 55.58,
+  "median": 17.0,
+  "nonzero": 40,
+  "nonzero-pct": "80",
   "total": 50
 }
 ``
@@ -115,7 +115,7 @@ time make 500-report
 
 Where you can expect this full result:
 
-```
+```bash
 Summary for trait counts
 python3 summarize.py < explicit.json
 {
@@ -200,7 +200,7 @@ time ./serial-no-restrictions.sh
 ```
 
 This should complete with in around 2 minutes with:
-```
+```bash
 VERIFICATION SUCCESSFUL
 ```
 
@@ -276,8 +276,8 @@ cd /icse22ae-kani/case-study-2/firecracker/
 time ./parse-no-restrictions-basic-checks.sh
 ```
 
-You should see commands of the following format printed to the console, without ever reaching a solver state:
-```
+After an initial Rust build output (~3 minutes), you should see commands of the following format printed to the console, without ever reaching a solver state:
+```bash
 adding goto-destructor code on jump to 'bb52'
 file /scratch/alexa/icse22ae-kani/case-study-2/firecracker/src/devices/src/virtio/mmio.rs line 313 column 21 function <virtio::mmio::MmioTransport as bus::BusDevice>::write: adding goto-destructor code on jump to 'bb53'
 ```
@@ -292,7 +292,7 @@ time ./parse-with-restrictions-basic-checks.sh
 ```
 
 Now, this should complete with:
-```
+```bash
 VERIFICATION SUCCESSFUL
 ```
 
@@ -316,14 +316,14 @@ To reproduce this table, we have written versions of each test per tool. Each te
 To compare each tool, we provide a Python `compare_tools.py` script. This script runs each test and checks for tool-specific success or failure strings. You should see results printed for each tool, then a `Results summary table` printed to standard out. All results should be either `SUCCESS` is verification succeeds or `FAILURE` if it does not. An `UNKNOWN` result indicates the tool has failed to run as expected, or did not produce the expected success or failure string(s) in its output.
 
 To reproduce Table 1, run the following inside the Docker:
-```
+```bash
 cd /icse22ae-kani/tests
 python3 compare_tools.py
 ```
 
 After reporting the results as each tool is run, you should see a results summary table of the following form:
 
-```
+```bash
 ---------------------- Results summary table --------------------------
 Tests:
 0 : simple-trait-pointer
