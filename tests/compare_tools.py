@@ -97,7 +97,7 @@ def check_crux_mir(results):
     res = ["Crux-MIR"]
     for test_name in TESTS:
         test = os.path.join(CWD, CRUX_MIR_DIR, test_name + ".rs")
-        res.append(check_verification_result(["cabal", "v2-exec", "--", "crux-mir", test], "Overall status: Valid.", ["Overall status: Invalid.", "unsupported ty", "standalone use of `dyn` is not supported"]))
+        res.append(check_verification_result(["/root/.cabal/bin/crux-mir", test], "Overall status: Valid.", ["Overall status: Invalid.", "unsupported ty", "standalone use of `dyn` is not supported", "error, called at"]))
     results.append(res)
     os.chdir(CWD)
 
