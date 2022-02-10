@@ -283,9 +283,7 @@ RUN git clone --no-checkout https://github.com/seahorn/seahorn.git ${SEAHORN_DIR
 RUN mkdir ${SEAHORN_DIR}/build \
   && cd ${SEAHORN_DIR}/build \
   && cmake \
-     # -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
      -DCMAKE_INSTALL_PREFIX=run \
-     # -DCMAKE_BUILD_TYPE="Debug" \
      -DCMAKE_BUILD_TYPE="Release" \
      -DCMAKE_CXX_COMPILER="clang++-${LLVM_VERSION}" \
      -DCMAKE_C_COMPILER="clang-${LLVM_VERSION}" \
@@ -336,7 +334,6 @@ USER root
 ENV RVT_DIR=/rust-verification-tools
 RUN chown ${USERNAME} -R ${RVT_DIR}
 RUN chown ${USERNAME} -R ${USER_HOME}
-# USER ${USERNAME}
 
 ENV PATH="${PATH}:${RVT_DIR}/scripts"
 ENV PATH="${PATH}:${RVT_DIR}/scripts/bin"
@@ -374,7 +371,6 @@ RUN apt-get update && \
       g++
 
 USER usr
-ADD --chown=usr . $SMACKDIR
 
 # Set the work directory
 WORKDIR $SMACKDIR
@@ -397,9 +393,7 @@ USER root
 RUN mkdir /icse22ae-kani
 WORKDIR /icse22ae-kani
 
-RUN touch foo.rs
 RUN kani --help
-# RUN cabal v2-exec -- crux-mir foo.rs
 RUN cargo-verify --help
 RUN smack --help
 
@@ -422,8 +416,9 @@ changelog-seen = 2\n\
 debug-logging = true' >> config.toml
 # Dependencies.
 RUN apt-get install -y cmake ninja-build
-# Build the Rust toolchain.
-RUN python3 x.py build --stage 1 -j 40
+# Build the Rust toolchain, then remove extras we don't need
+RUN python3 x.py build --stage 1 -j 40  && \
+    rm -rf /rust/src /rust/*.toml /rust/library  /rust/build/cache /rust/build/bootstrap /rust/build/x86_64-unknown-linux-gnu/llvm /rust/build/x86_64-unknown-linux-gnu/stage1-tools* /rust/build/x86_64-unknown-linux-gnu/stage0*
 
 ###########################     Case studies     ###########################
 
@@ -445,6 +440,11 @@ WORKDIR case-study-2
 RUN git clone https://github.com/avanhatt/firecracker.git
 WORKDIR firecracker
 RUN git checkout case-study-2
+
+###########################   Remove more uneeded data ###########################
+
+# Git
+RUN rm -rf /home/usr/smack/.git /home/usr/klee/.git /home/usr/klee-uclibc/.git /home/usr/minisat/minisat/.git /home/usr/seahorn/.git /home/usr/seahorn/clam/.git /home/usr/seahorn/clam/crab/.git /home/usr/seahorn/llvm-seahorn/.git /home/usr/seahorn/sea-dsa/.git /home/usr/stp/stp/.git /home/usr/verify-c-common/.git /icse22ae-kani/case-study-2/firecracker/.git /icse22ae-kani/case-study-1/vm-superio/.git /icse22ae-kani/case-study-1/firecracker/.git /rmc/.git /rust-verification-tools/.git /crucible/.git
 
 ###########################     Final landing spot     ###########################
 
