@@ -53,7 +53,10 @@ We provide our artifact as a [Docker][docker] instance. Users should install Doc
 
 ## Machine requirements
 
-Our full Docker image contains 3 related work projects that each have many dependencies (Crux-MIR, Rust Verification Tools, and SMACK), which increases both the size of the instance and the requirements for the host machine. The instance is around 30GB. 
+Our full Docker image contains 3 related work projects that each have many dependencies (Crux-MIR, Rust Verification Tools, SMACK, KLEE, Seahorn, LLVM), which increases both the size of the instance and the requirements for the host machine. The instance is 30.4GB (note 2022-02-10: a previous version was inadvertently twice this size, we have corrected that bug). 
+
+[Update 2022-02-10] 
+This artifact performs poorly with <5GB of memory accessible to the Docker container (most modern laptops have at least 8GB). We include instructions [below](#check-memory-available) for checking and updating the Docker memory limit, which is most applicable when running Docker Desktop on macOS or Windows.
 
 ----
 
@@ -68,6 +71,27 @@ To interactively run the Docker instance, run the following:
 ```
 docker run -i -t --rm ghcr.io/avanhatt/icse22ae-kani:0.1
 ```
+
+### Check memory available
+
+Our artifact may have essentially processes killed from memory restrictions if the Docker container has <5GB of Memory available. To check how much Memory is available to the running container, open a second terminal on the host machine (not within the Docker shell) and run:
+```
+docker stats
+```
+
+Check the column titled `MEM USAGE / LIMIT`. On macOS, the second value of limit may initially be `1.939GiB`, because although native Docker [does not default to memory limits][docker-mem], [Docker Desktop for Mac][docker-mac] and [Docker Desktop for Windows][docker-windows] have a 2GB limit imposed. 
+
+If necessary, change the Docker Desktop memory limit to 5GB by following the links above or these steps:
+1. Open Docker Desktop.
+2. Open Setting (gear icon).
+3. Click Resources on the side bar.
+4. Increase the Memory bar to at least 5GB.
+
+Similarly, if you are running Docker within a virtual container or cloud instance, follow the instructions from that provider to ensure `docker stats` shows close to 5GB of memory (in our testing, the stats value was `4.82GiB` after changing Docker Desktop, this was sufficient).
+
+[docker-mem]: https://docs.docker.com/config/containers/resource_constraints/
+[docker-mac]: https://docs.docker.com/desktop/mac/
+[docker-windows]: https://docs.docker.com/desktop/windows/
 
 # Part 1: Section 4.1: Prevalence of dynamic trait objects.
 #### Time estimate: 10 minutes.
