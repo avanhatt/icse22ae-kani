@@ -312,6 +312,8 @@ file /scratch/alexa/icse22ae-kani/case-study-2/firecracker/src/devices/src/virti
 
 Once you have seen enough of these statements (or after 20 minutes has past), kill the command with `ctrl-C`.
 
+Note: if you leave this specific command running on an instance with <64GB RAM, it may terminate with a `Killed` message. Since we do not expect this command to succeed without the next step, this is consistent with the results in the paper.
+
 Now, we can run the command _with_ function pointer restrictions enabled. Here, the loop unwinding processing should complete within 5 minutes, with the entire verification completing within 20 minutes (depending on host machine).
 
 ```bash
