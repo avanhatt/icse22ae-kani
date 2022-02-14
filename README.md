@@ -128,7 +128,7 @@ python3 summarize.py < implicit.json
   "nonzero-pct": "80",
   "total": 50
 }
-``
+```
 
 Note: by default this will use the already-downloaded crate data at `/icse22ae-kani/crate-data/db-dump.tar.gz`. To optionally re-download the data, run `rm /icse22ae-kani/crate-data/db-dump.tar.gz` before the previous command (the command will then take an additional 30+ minutes, depending on the host machine).
 
@@ -166,8 +166,8 @@ python3 summarize.py < implicit.json
 # Part 2: Section 4.2: Case study: Firecracker.
 #### Time estimate: 30 minutes.
 
-In these case studies, we consider how two different variants of Kani---one with our new vtable function pointer restrictions (as described in Section 3.3), and one
-without---perform on examples from the open source [Firecracker][] hypervisor written in Rust.
+In these case studies, we consider how two different variants of Kani—one with our new vtable function pointer restrictions (as described in Section 3.3), and one
+without—perform on examples from the open source [Firecracker][] hypervisor written in Rust.
 
 ### Case Study 1: Firecracker Serial Device
 
@@ -386,9 +386,9 @@ Two other Rust verification tools, Prusti and CRUST, do not support any of the d
 
 # Further notes on Reusability
 
-To prepare this artifact, this repository's `Dockerfile` includes installation of 4 Rust verification tools---Kani, Crux-MIR, Rust Verification Tools, and SMACK - Rust (though any mistakes in the installation or usage are solely our fault, not the fault of the authors of those tools!) These installation steps may be useful to other researchers aiming to compare tools for verifying Rust. 
+To prepare this artifact, this repository's `Dockerfile` includes installation of 4 Rust verification tools—Kani, Crux-MIR, Rust Verification Tools, and SMACK - Rust (though any mistakes in the installation or usage are solely our fault, not the fault of the authors of those tools!) These installation steps may be useful to other researchers aiming to compare tools for verifying Rust. 
 
-In addition, our `crate-data/crate_scrape.py` tool may be useful for other analyses on popular Rust crates---researchers can change the bash command run in the script to produce custom numerical results.
+In addition, our `crate-data/crate_scrape.py` tool may be useful for other analyses on popular Rust crates—researchers can change the bash command run in the script to produce custom numerical results.
 
 # End
 
