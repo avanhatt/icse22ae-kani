@@ -34,7 +34,7 @@ We compare two versions of Kani, one with our new function pointer restriction a
 
 There are two components to this artifact:
 1. **Kani Rust Verifier (Kani):** This is our publicly available verifier for Rust. Kani (formerly known as the Rust Model Checker (RMC)) contains code from the Rust compiler and is distributed under the terms of both the MIT license and the Apache License (Version 2.0). We also include two case studies of the performance of Kani on example from the open source Firecracker project.
-2. **Verification test cases and comparison to related work:** Our contributions include an open-source suite of verification test cases, kept up-to-date on [our project Github][dyn-tests]. In addition, we translate 8 representative cases to the syntax of related work tools. Reproducing this component requires a very large number of software dependencies, since each tool is build on a different language stack (i.e., multiple versions of Rust, LLVM, Haskell, OCaml, etc). We have packaged these dependencies into a Docker instance; however, the instance is 30.4GB. We also provide a minimal container that excludes the related work comparison (and is 12.9GB).
+2. **Verification test cases and comparison to related work:** Our contributions include an open-source suite of verification test cases, kept up-to-date on [our project Github][dyn-tests]. In addition, we translate 8 representative cases to the syntax of related work tools. Reproducing this component requires a very large number of software dependencies, since each tool is build on a different language stack (i.e., multiple versions of Rust, LLVM, Haskell, OCaml, etc). We have packaged these dependencies into a Docker instance; however, the instance is 30.4GB. We also provide a minimal container that excludes the related work comparison (and is 13.4GB).
   
 We estimate the required components of this artifact to take around 1.5 hour of reviewer time.
 
@@ -72,7 +72,7 @@ To interactively run the full, 30.4GB Docker instance, run the following:
 docker run -i -t --rm ghcr.io/avanhatt/icse22ae-kani:0.1
 ```
 
-If the full Docker instance is too large for your configuration, you can use a minimal instance that _excludes_ the related work comparison with:
+If the full Docker instance is too large for your configuration, you can use a minimal instance (13.4GB) that _excludes_ the related work comparison with:
 
 ```bash
 # Optional: minimal instance instead
@@ -226,7 +226,9 @@ fn serial_harness() {
 }
 ```
 
-First, we'll run Kani on this harness without restrictions. `serial-no-restrictions.sh` is a bash script that runs Kani by invoking the custom Kani backend to the Rust compiler, combining the produced CBMC files per crate, anf finally invoking the solver.
+First, we'll run Kani on this harness without restrictions. `serial-no-restrictions.sh` is a bash script that runs Kani by invoking the custom Kani backend to the Rust compiler, combining the produced CBMC files per crate, and finally invoking the solver.
+
+Note that the final times printed are for the entire execution, and the time printed prior to that are for the calls to the CBMC backend alone.
 
 Run the script with:
 ```bash

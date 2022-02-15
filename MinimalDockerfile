@@ -40,6 +40,9 @@ RUN cargo build --release -p kani-link-restrictions
 # Add Kani scripts to path
 ENV PATH=/rmc/scripts:$PATH
 
+# Scriping dependencies
+RUN pip3 install argparse tabulate numpy
+
 ###########################    Sanity check tools    ###########################
 USER root
 RUN mkdir /icse22ae-kani
