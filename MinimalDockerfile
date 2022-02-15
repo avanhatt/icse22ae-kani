@@ -1,0 +1,95 @@
+# This minimal Dockerfile includes only Kani itself, rather than including
+# the comparison to related work. 
+# Use a recent Ubuntu as the parent image.
+FROM ubuntu:20.04
+
+########################### Kani Rust Verifier ###########################
+
+USER root
+# Install some system level dependencies
+RUN apt-get update -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y sudo git lsb-release universal-ctags time parallel vim emacs
+
+# Clone Kani itself 
+RUN git clone -b ae https://github.com/avanhatt/rmc.git
+WORKDIR /rmc
+RUN git config --global user.email "placeholder"
+RUN git config --global user.name "placeholder"
+RUN git pull -f
+
+# Install Kani's dependencies, including Python and CBMC dependencies
+RUN ./scripts/setup/ubuntu-20.04/install_deps.sh
+RUN ./scripts/setup/ubuntu-20.04/install_cbmc.sh
+RUN ./scripts/setup/install_viewer.sh 2.6
+RUN ./scripts/setup/install_rustup.sh
+
+RUN git submodule update --init --depth 1
+
+# Add .cargo/bin to PATH
+ENV RUST_BACKTRACE=1
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN rustup default nightly-2022-01-19
+
+RUN cargo --version
+RUN cargo clean
+RUN cargo build -p kani-compiler
+
+# Build tool for linking Kani pointer restrictions
+RUN cargo build --release -p kani-link-restrictions
+
+# Add Kani scripts to path
+ENV PATH=/rmc/scripts:$PATH
+
+###########################    Sanity check tools    ###########################
+USER root
+RUN mkdir /icse22ae-kani
+WORKDIR /icse22ae-kani
+RUN kani --help
+
+###########################    Copy tests    ###########################
+COPY tests tests
+
+###########################     Crate data     ###########################
+
+COPY crate-data crate-data
+
+WORKDIR /
+# Check out the Rust commit we used.
+RUN git clone https://github.com/rust-lang/rust.git
+WORKDIR rust
+RUN git checkout 0a56eb11fafdd3c9d86c100b6b90505f5f9fdb00
+# Configure for debug build.
+RUN printf 'profile = "user"\n\
+changelog-seen = 2\n\
+[rust]\n\
+debug-logging = true' >> config.toml
+# Dependencies.
+RUN apt-get install -y cmake ninja-build
+# Build the Rust toolchain, then remove extras we don't need
+RUN python3 x.py build --stage 1 -j 40  && \
+    rm -rf /rust/src /rust/*.toml /rust/library  /rust/build/cache /rust/build/bootstrap /rust/build/x86_64-unknown-linux-gnu/llvm /rust/build/x86_64-unknown-linux-gnu/stage1-tools* /rust/build/x86_64-unknown-linux-gnu/stage0*
+
+###########################     Case studies     ###########################
+
+WORKDIR /icse22ae-kani
+RUN mkdir case-study-1
+WORKDIR case-study-1 
+RUN git clone https://github.com/avanhatt/firecracker.git
+WORKDIR firecracker
+RUN git checkout case-study-1
+
+WORKDIR .. 
+RUN git clone https://github.com/avanhatt/vm-superio.git
+WORKDIR vm-superio
+RUN git checkout is_in_loop_mode_true
+
+WORKDIR /icse22ae-kani
+RUN mkdir case-study-2
+WORKDIR case-study-2
+RUN git clone https://github.com/avanhatt/firecracker.git
+WORKDIR firecracker
+RUN git checkout case-study-2
+
+###########################     Final landing spot     ###########################
+
+WORKDIR /icse22ae-kani

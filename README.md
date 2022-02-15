@@ -34,7 +34,7 @@ We compare two versions of Kani, one with our new function pointer restriction a
 
 There are two components to this artifact:
 1. **Kani Rust Verifier (Kani):** This is our publicly available verifier for Rust. Kani (formerly known as the Rust Model Checker (RMC)) contains code from the Rust compiler and is distributed under the terms of both the MIT license and the Apache License (Version 2.0). We also include two case studies of the performance of Kani on example from the open source Firecracker project.
-2. **Verification test cases and comparison to related work:** Our contributions include an open-source suite of verification test cases, kept up-to-date on [our project Github][dyn-tests]. In addition, we translate 8 representative cases to the syntax of related work tools. Reproducing this component requires a very large number of software dependencies, since each tool is build on a different language stack (i.e., multiple versions of Rust, LLVM, Haskell, OCaml, etc). We have packaged these dependencies into a Docker instance; however, the instance is around 30GB.
+2. **Verification test cases and comparison to related work:** Our contributions include an open-source suite of verification test cases, kept up-to-date on [our project Github][dyn-tests]. In addition, we translate 8 representative cases to the syntax of related work tools. Reproducing this component requires a very large number of software dependencies, since each tool is build on a different language stack (i.e., multiple versions of Rust, LLVM, Haskell, OCaml, etc). We have packaged these dependencies into a Docker instance; however, the instance is 30.4GB. We also provide a minimal container that excludes the related work comparison (and is 12.9GB).
   
 We estimate the required components of this artifact to take around 1.5 hour of reviewer time.
 
@@ -66,10 +66,17 @@ This artifact performs poorly with <5GB of memory accessible to the Docker conta
 
 The remainder of this artifact assumes all commands are run within the Docker instance.
 
-To interactively run the Docker instance, run the following:
+To interactively run the full, 30.4GB Docker instance, run the following:
 
-```
+```bash
 docker run -i -t --rm ghcr.io/avanhatt/icse22ae-kani:0.1
+```
+
+If the full Docker instance is too large for your configuration, you can use a minimal instance that _excludes_ the related work comparison with:
+
+```bash
+# Optional: minimal instance instead
+docker run -i -t --rm ghcr.io/avanhatt/icse22ae-kani-minimal:0.1
 ```
 
 ### Check memory available
@@ -349,6 +356,14 @@ To reproduce Table 1, run the following inside the Docker:
 ```bash
 cd /icse22ae-kani/tests
 python3 compare_tools.py
+```
+
+If you are running the minimal instance, this command will fail with command not found errors. Instead, run the following to see the results for Kani alone:
+
+```bash
+# Optional: for the minimal instance, run Kani-only
+cd /icse22ae-kani/tests
+python3 compare_tools.py --tools kani
 ```
 
 After reporting the results as each tool is run, you should see a results summary table of the following form:
